@@ -1,0 +1,158 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Default Local Group
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Default Local Group
+  m_GUID: a5466a3993fb50849888df8ddde75e92
+  m_SerializeEntries:
+  - m_GUID: 002771f0c24c0694f87b1ddf99db3852
+    m_Address: Leader0
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 00b1c99cb0a00704f8b33c1cbd9922b8
+    m_Address: InfantryPresetMasterData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0bb9d6b68c3b1d4449c02c8eb40d7703
+    m_Address: MountainUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 164114dfe5c1fac43bd2433c4f6a362b
+    m_Address: Leader5
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 28a317adc2fced54590fe30dd6adb162
+    m_Address: PlaneUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 50e2784821315c64397bcd84fec6226f
+    m_Address: Leader2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ad081120d8a6e948a92222b4c13c810
+    m_Address: Longhua
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5eca6ba0b57fd4f42b87bf4f4d00aefc
+    m_Address: Leader1
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 62b883fced4041946b8a73774ff7f528
+    m_Address: DesertUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 64a48593e5303b54fb722468ab8a37e0
+    m_Address: ForceStatusMasterData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6b54a357b1e9fad46a787912b6a46864
+    m_Address: Aurelia
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6e4a2c44bbdd2c84ba8257186de92740
+    m_Address: Leader4
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 70dd56441514d7949b04e4f1389cb375
+    m_Address: RiverUI
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73b1445134948194a89b59960ba12b27
+    m_Address: Leader6
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7741072ee97f3fe4bb2d5a1d84502e2c
+    m_Address: FOGovermentMasterData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 853ff48c417e07f4c845c8512d3d785a
+    m_Address: Leader9
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8c916e34ba57b41408b257ab4364f9fc
+    m_Address: Zarif
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8d0caa2cc91cd7b4bb8de0c1659e9924
+    m_Address: StateMasterData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 90a50f210692380469d174c5ffa7636b
+    m_Address: Erden
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab07fe0461493704b907a6c7cc7d5152
+    m_Address: IdeologyMasterData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab3bfba5899a9954faa20848d73cf2e7
+    m_Address: Manahiri
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7175ad2f9c717f459d51adedd873ebc
+    m_Address: Volnia
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be99cce9a5efe2c4da5ee434733c1866
+    m_Address: Leader7
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c430294c54b21e9458a4a7c1113b03ed
+    m_Address: Kasara
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d4d1401280939904284a57af29c960f7
+    m_Address: Leader8
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d624f8e8226c4a148bd290d8d5a725ef
+    m_Address: Leader3
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e259c02e3fb7b1e46abcb5048bf5fb2d
+    m_Address: Varnadi
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: cfb5fd31f2b180d42b8434ad7f8f81d9, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 07a3a377ed77e8f45bf16d4b22519eda, type: 2}
+    - {fileID: 11400000, guid: 4c177b4a36adb9f4eb3fc40815394a78, type: 2}
