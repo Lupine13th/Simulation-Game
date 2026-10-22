@@ -3,28 +3,28 @@
   "WorkspaceRootPath": "D:\\SimulationGame\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|d:\\simulationgame\\assets\\script\\manager\\battlesystemmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|solutionrelative:assets\\script\\manager\\battlesystemmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|D:\\SimulationGame\\assets\\script\\manager\\fieldmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|solutionrelative:assets\\script\\manager\\fieldmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|D:\\SimulationGame\\assets\\script\\manager\\modelmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|solutionrelative:assets\\script\\manager\\modelmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|D:\\SimulationGame\\assets\\script\\state\\state.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|solutionrelative:assets\\script\\state\\state.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|D:\\SimulationGame\\assets\\script\\ingameui\\ordermenu.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|solutionrelative:assets\\script\\ingameui\\ordermenu.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|d:\\simulationgame\\assets\\script\\manager\\battlesystemmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|solutionrelative:assets\\script\\manager\\battlesystemmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|D:\\SimulationGame\\assets\\script\\manager\\modelmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|solutionrelative:assets\\script\\manager\\modelmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|D:\\SimulationGame\\assets\\script\\gamedata\\countrydata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|solutionrelative:assets\\script\\gamedata\\countrydata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|D:\\SimulationGame\\assets\\script\\state\\state.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|solutionrelative:assets\\script\\state\\state.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D1987678-4C9C-12E9-AD1C-EBB384058669}|Assembly-CSharp.csproj|D:\\SimulationGame\\assets\\script\\ingameui\\enlistmenu.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -122,17 +122,17 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 0,
               "Title": "BattleSystemManager.cs",
               "DocumentMoniker": "D:\\SimulationGame\\Assets\\Script\\Manager\\BattleSystemManager.cs",
               "RelativeDocumentMoniker": "Assets\\Script\\Manager\\BattleSystemManager.cs",
               "ToolTip": "D:\\SimulationGame\\Assets\\Script\\Manager\\BattleSystemManager.cs",
               "RelativeToolTip": "Assets\\Script\\Manager\\BattleSystemManager.cs",
-              "ViewState": "AgIAAMECAAAAAAAAAAAxwKQCAAArAAAAAAAAAA==",
+              "ViewState": "AgIAAIACAAAAAAAAAAAowKECAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-06-12T03:42:39.655Z",
               "IsPinned": true,
@@ -148,20 +148,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "FieldManager.cs",
               "DocumentMoniker": "D:\\SimulationGame\\Assets\\Script\\Manager\\FieldManager.cs",
               "RelativeDocumentMoniker": "Assets\\Script\\Manager\\FieldManager.cs",
               "ToolTip": "D:\\SimulationGame\\Assets\\Script\\Manager\\FieldManager.cs",
               "RelativeToolTip": "Assets\\Script\\Manager\\FieldManager.cs",
-              "ViewState": "AgIAAKkBAAAAAAAAAAAowMsBAAAdAAAAAAAAAA==",
+              "ViewState": "AgIAAL0BAAAAAAAAAAAEwOEBAAA+AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-18T05:44:43.395Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "CountryData.cs",
               "DocumentMoniker": "D:\\SimulationGame\\Assets\\Script\\GameData\\CountryData.cs",
               "RelativeDocumentMoniker": "Assets\\Script\\GameData\\CountryData.cs",
@@ -187,7 +187,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 4,
               "Title": "ModelManager.cs",
               "DocumentMoniker": "D:\\SimulationGame\\Assets\\Script\\Manager\\ModelManager.cs",
               "RelativeDocumentMoniker": "Assets\\Script\\Manager\\ModelManager.cs",
@@ -226,26 +226,26 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 2,
               "Title": "State.cs",
               "DocumentMoniker": "D:\\SimulationGame\\Assets\\Script\\State\\State.cs",
               "RelativeDocumentMoniker": "Assets\\Script\\State\\State.cs",
               "ToolTip": "D:\\SimulationGame\\Assets\\Script\\State\\State.cs",
               "RelativeToolTip": "Assets\\Script\\State\\State.cs",
-              "ViewState": "AgIAAPgAAAAAAAAAAAAQwAIBAAAaAAAAAAAAAA==",
+              "ViewState": "AgIAAPwAAAAAAAAAAAD4vxMBAAAYAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-13T19:48:37.938Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "OrderMenu.cs",
               "DocumentMoniker": "D:\\SimulationGame\\Assets\\Script\\InGameUI\\OrderMenu.cs",
               "RelativeDocumentMoniker": "Assets\\Script\\InGameUI\\OrderMenu.cs",
               "ToolTip": "D:\\SimulationGame\\Assets\\Script\\InGameUI\\OrderMenu.cs",
               "RelativeToolTip": "Assets\\Script\\InGameUI\\OrderMenu.cs",
-              "ViewState": "AgIAABEAAAAAAAAAAAAgwB4AAAANAAAAAAAAAA==",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAcwB4AAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-07-17T02:22:57.085Z",
               "EditorCaption": ""

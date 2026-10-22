@@ -427,70 +427,13 @@ public class FieldManager : SingletonManager<FieldManager>
     /// </summary>
     public void HighLightBorderAndOwnState()
     {
-        //国境の種類を列挙
-        List<Province> borderProvinceList = new List<Province>();
 
         ClickableProvinceDict.Clear();  //クリック可能なプロヴィンスの辞書をクリア
 
         var borderList = BattleSystemManager.Instance.PlayerCountry.BorderStateList;
         var guarrisonList = BattleSystemManager.Instance.PlayerCountry.GuarrisonStateList;
 
-        foreach (var state in m_StateList)
-        {
-            if (state.OwnedCountry == null)
-                continue;
-
-            if (GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //国境プロヴィンスの中でもプレイヤーのステートをマーク
-            {
-                //自分のステートをマークする
-                state.SetStateColor(new Vector3(0.8f, 0.8f, 0.8f));
-
-                //国境プロヴィンスをマークする
-                borderProvinceList = state.SetStateColorOnBorder();
-
-                foreach (var prov in state.ProvinceList)
-                {
-                    if (borderProvinceList.Contains(prov))  //国境プロヴィンスは国境として登録
-                    {
-                        foreach (var nState in prov.NeighberStateList)  //そのプロヴィンスが隣接しているステートの数分、回す(複数のステートと隣接している場合にしっかりとUIとデータに反映するため)
-                        {
-                            /*if (!state.OwnedCountry.EnemyCountryList.Contains(nState.state.OwnedCountry) || nState.state.OwnedCountry != null)  //敵対している勢力と空ステート以外は無視
-                            {
-                                continue;
-                            }*/
-
-                            if (nState.state.OwnedCountry != null)  //そのステートはどこかの勢力に領有されている
-                            {
-                                if (!state.OwnedCountry.EnemyCountryList.Contains(nState.state.OwnedCountry))   //かつ、その隣接しているステートの勢力と現在のステートの勢力が戦争状態に無い
-                                {
-                                    continue;   //戦争状態じゃない勢力には攻め込めないため、無視
-                                }
-                            }
-
-                            if (ClickableProvinceDict.ContainsKey(nState.state))    //既にそのステートデータで辞書が作られているか
-                            {
-                                ClickableProvinceDict[nState.state].Add(new ClickableProvinceData() { type = ForcePositionType.Border, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov });
-                            }
-                            else
-                            {
-                                ClickableProvinceDict.Add(nState.state, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Border, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov } });
-                            }
-                        }
-                    }
-                    else                                    //国境プロヴィンスじゃない場合は駐屯地として登録
-                    {
-                        if (ClickableProvinceDict.ContainsKey(prov.OwnedState))
-                        {
-                            ClickableProvinceDict[prov.OwnedState].Add(new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = new List<State>() { prov.OwnedState }, proviince = prov });
-                        }
-                        else
-                        {
-                            ClickableProvinceDict.Add(prov.OwnedState, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov } });
-                        }
-                    }
-                }
-            }
-        }
+        SearchNeighborStateForDict(ClickableProvinceDict, BattleSystemManager.Instance.PlayerCountry);
 
         borderList.Clear();
         guarrisonList.Clear();
@@ -677,6 +620,74 @@ public class FieldManager : SingletonManager<FieldManager>
         else                    //所有している州があれば
         {
             return states;      //リストを返す
+        }
+    }
+
+    /// <summary>
+    /// ステートをキー、隣接プロヴィンスデータを値とする辞書型に勢力を指定してデータを入れる
+    /// /// </summary>
+    /// <param name="dict"></param>
+    /// <param name="country"></param>
+    public void SearchNeighborStateForDict(Dictionary<State, List<ClickableProvinceData>> dict, CountryData country)
+    {
+        //国境の種類を列挙
+        var borderProvinceList = new List<Province>();
+
+        foreach (var state in m_StateList)
+        {
+            if (state.OwnedCountry == null)
+                continue;
+
+            if (state.OwnedCountry == country)  //現在のステートが指定した勢力に属している
+            {
+                //自分のステートをマークする
+                state.SetStateColor(new Vector3(0.8f, 0.8f, 0.8f));
+
+                //国境プロヴィンスをマークする
+                borderProvinceList = state.SetStateColorOnBorder();
+
+                foreach (var prov in state.ProvinceList)
+                {
+                    if (borderProvinceList.Contains(prov))  //国境プロヴィンスは国境として登録
+                    {
+                        foreach (var nState in prov.NeighberStateList)  //そのプロヴィンスが隣接しているステートの数分、回す(複数のステートと隣接している場合にしっかりとUIとデータに反映するため)
+                        {
+                            /*if (!state.OwnedCountry.EnemyCountryList.Contains(nState.state.OwnedCountry) || nState.state.OwnedCountry != null)  //敵対している勢力と空ステート以外は無視
+                            {
+                                continue;
+                            }*/
+
+                            if (nState.state.OwnedCountry != null)  //そのステートはどこかの勢力に領有されている
+                            {
+                                if (!state.OwnedCountry.EnemyCountryList.Contains(nState.state.OwnedCountry))   //かつ、その隣接しているステートの勢力と現在のステートの勢力が戦争状態に無い
+                                {
+                                    continue;   //戦争状態じゃない勢力には攻め込めないため、無視
+                                }
+                            }
+
+                            if (dict.ContainsKey(nState.state))    //既にそのステートデータで辞書が作られているか
+                            {
+                                dict[nState.state].Add(new ClickableProvinceData() { type = ForcePositionType.Border, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov });
+                            }
+                            else
+                            {
+                                dict.Add(nState.state, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Border, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov } });
+                            }
+                        }
+                    }
+                    else                                    //国境プロヴィンスじゃない場合は駐屯地として登録
+                    {
+                        if (dict.ContainsKey(prov.OwnedState))
+                        {
+                            dict[prov.OwnedState].Add(new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = new List<State>() { prov.OwnedState }, proviince = prov });
+                        }
+                        else
+                        {
+                            dict.Add(prov.OwnedState, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov } });
+                        }
+                    }
+                }
+            }
         }
     }
 }

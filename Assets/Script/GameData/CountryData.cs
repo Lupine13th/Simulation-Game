@@ -115,6 +115,11 @@ public class CountryData
     public Dictionary<State, GameObject> BattleModelDict { get; private set; } = new Dictionary<State, GameObject>();
 
     /// <summary>
+    /// key:ターゲットとするステート value:そのステートに隣接しているプロヴィンスのリスト
+    /// </summary>
+    public Dictionary<State, List<ClickableProvinceData>> NeighborStateDict { get; private set; } = new Dictionary<State, List<ClickableProvinceData>>();
+
+    /// <summary>
     /// この国家のプレイヤー
     /// </summary>
     public PlayerData OwnedPlayerData { get; private set; }
