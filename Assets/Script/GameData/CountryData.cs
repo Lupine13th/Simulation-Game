@@ -289,7 +289,7 @@ public class CountryData
     }
 
     /// <summary>
-    /// 対象の勢力と戦争状態になる
+    /// 対象の勢力と同盟状態になる
     /// </summary>
     /// <param name="targetdata"></param>
     public void FormAlliance(CountryData targetdata)
@@ -374,12 +374,22 @@ public class CountryData
             }
         }
 
-        if (FieldManager.Instance.GetPlayerFromCountry(this).IsPlayer)    //もしプレイヤー国家だったら
+        if (OwnedPlayerData.IsPlayer)    //もしプレイヤー国家だったら
         {
             SetInventryUI();
         }
 
         //====================「リソース」に関する情報の更新End===================
+
+
+        //====================「AI思考」の更新===================
+
+        if (!OwnedPlayerData.IsPlayer)    //もしプレイヤー国家じゃなかったら
+        {
+            OwnedPlayerData.UpdateAIThinkingOnDefencive();  //AIの思考を更新
+        }
+
+        //====================「AI思考」の更新End===================
     }
 
     /// <summary>
@@ -479,6 +489,32 @@ public class CountryData
         }
 
         return forceList;
+    }
+
+    /// <summary>
+    /// 駐屯中の軍団でランダムな軍団を返す
+    /// </summary>
+    /// <returns></returns>
+    public Force GetRandomFreeForce()
+    {
+        List<Force> freeForceList = new List<Force>();  //現在、駐屯中の軍団
+
+        foreach(var force in ForceList)
+        {
+            if (force.CurrentTargetStateId == -1)   //ターゲットが無い軍団の場合
+            {
+                freeForceList.Add(force);   //リストに追加
+            }
+        }
+
+        if (freeForceList.Count == 0)   //自由な部隊が無ければ
+        {
+            return null;
+        }
+
+        var randomindex = Random.Range(0, freeForceList.Count); //インデックス内で乱数を取る
+
+        return freeForceList[randomindex];
     }
 }
 

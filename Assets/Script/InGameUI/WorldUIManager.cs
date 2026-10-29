@@ -202,13 +202,13 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     {
         foreach (var force in m_ForceUIDict)
         {
-            force.Value.FlagImage.sprite = FieldManager.Instance.CountryList[force.Key.OwnerCountryIndex].CountryFlag;  //‘Šøƒf[ƒ^“ü—Í
+            force.Value.FlagImage.sprite = force.Key.OwnerCountry.CountryFlag;  //‘Šøƒf[ƒ^“ü—Í
             force.Value.ForceNameText.SetText(force.Key.ForcesName);            //ŒR’c‚Ì–¼‘O‚ğ“ü—Í
             force.Value.SoldiersText.SetText(force.Key.Soldiers.ToString());    //ŒR’c‚Ì•º”‚ğ“ü—Í
             force.Value.AttackText.SetText(force.Key.AttackPower.ToString());   //ŒR’c‚ÌUŒ‚—Í‚ğ“ü—Í
             force.Value.DefenceText.SetText(force.Key.DefensePower.ToString()); //ŒR’c‚Ì–hŒä—Í‚ğ“ü—Í
 
-            Vector3 color = FieldManager.Instance.CountryList[force.Key.OwnerCountryIndex].CountryColor;    //‘‰ÆƒJƒ‰[æ“¾
+            Vector3 color = force.Key.OwnerCountry.CountryColor;    //‘‰ÆƒJƒ‰[æ“¾
             force.Value.BackGround.color = new Color(color.x, color.y, color.z);                            //”wŒi‚É“K‰
         }
     }

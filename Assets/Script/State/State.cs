@@ -1,7 +1,5 @@
 using System.Collections.Generic;
-using System.Drawing;
 using System.Threading.Tasks;
-using Unity.VisualScripting;
 using UnityEngine;
 using static Province;
 
@@ -19,6 +17,13 @@ public enum AboveModelState
     None,
     Guarrison,
     Occupied
+}
+
+public enum BuildingType
+{
+    None,
+    Market, //市場
+    Quarry  //採掘場
 }
 
 public struct StateData
@@ -60,6 +65,9 @@ public class State : MonoBehaviour
     [SerializeField] private int m_Income;      //このステートの収入
     [SerializeField] private int m_Population;  //このステートの人口
 
+    [SerializeField] private GameObject m_StateIcon;            //アイコン
+    [SerializeField] private SpriteRenderer m_IconBackGround;   //アイコン背景
+
     public CountryData OwnedCountry { get; private set; }
 
     public string StateName { get; private set; }
@@ -75,10 +83,20 @@ public class State : MonoBehaviour
     public Dictionary<State, List<Province>> BorderProvDict { get; private set; } = new Dictionary<State, List<Province>>();
     public Dictionary<CountryData, List<Force>> GuarrisonDict {  get; private set; } = new Dictionary<CountryData, List<Force>>();
 
+    /// <summary>
+    /// このステートに存在する建物リスト
+    /// </summary>
+    public List<BuildingType> BuildingList { get; private set; } = new List<BuildingType>()
+    {
+        BuildingType.None, 
+        BuildingType.None, 
+        BuildingType.None
+    };
+
     public int OccupiedValue { get; private set; }
     public int MaxOccupiedValue { get; private set; }
     public Vector3 MidModelPos { get; private set; }
-    public bool IsModelChanging { get; private set; }
+    public bool IsIconAnimation { get; private set; }
     public CountryData OccupiedCountry { get; private set; }
     public AboveModelState ModelState { get; private set; }
 
@@ -187,18 +205,18 @@ public class State : MonoBehaviour
                         break;
                 }
             }
-
-            //MidModelPos = transform.position; //ステートの中心を設定
-
-            Vector3 provPos = new Vector3();
-
-            foreach (var prov in m_ProvinceList)
-            {
-                provPos += prov.gameObject.transform.position;    //このステートを構成する全部のプロヴィンスの座標を足す
-            }
-
-            MidModelPos = provPos / m_ProvinceList.Count;   //プロヴィンス数で割ると中央値が出る(はず)
         }
+
+        Vector3 provPos = new Vector3();
+
+        foreach (var prov in m_ProvinceList)
+        {
+            provPos += prov.gameObject.transform.position;    //このステートを構成する全部のプロヴィンスの座標を足す
+        }
+
+        MidModelPos = provPos / m_ProvinceList.Count;   //プロヴィンス数で割ると中央値が出る(はず)
+
+        m_StateIcon.transform.position = new Vector3(MidModelPos.x, m_StateIcon.transform.position.y, MidModelPos.z);   //アイコンの座標を調整
 
         //============最大占領ポイントを設定===========
 
@@ -241,10 +259,9 @@ public class State : MonoBehaviour
 
     private void Update()
     {
-        if (IsModelChanging)    
+        if (IsIconAnimation)
         {
-            
-            IsModelChanging = false;    //モデル切り替え終了
+
         }
     }
 
@@ -381,7 +398,7 @@ public class State : MonoBehaviour
     /// </summary>
     public void AddGuarrisonForce(Force force)
     {
-        CountryData country = FieldManager.Instance.CountryList[force.OwnerCountryIndex]; //どの国所属か
+        CountryData country = force.OwnerCountry; //どの国所属か
 
         if (GuarrisonDict.ContainsKey(country))
         {
@@ -398,12 +415,18 @@ public class State : MonoBehaviour
     /// 占領中
     /// </summary>
     /// <param name="value"></param>
-    /// <param name="occupiedCountry"></param>
-    public void Occupied(int value, CountryData occupiedCountry)
+    /// <param name="occupyingCountry"></param>
+    public void Occupied(int value, CountryData occupyingCountry)
     {
-        if (OccupiedCountry != occupiedCountry) //占領中の国家と占領を行った国家が違う、もしくは占領中の国家がいなかった場合
+        if (!m_StateIcon.activeSelf)
         {
-            OccupiedCountry = occupiedCountry;  //占領中の国家を変更
+            m_StateIcon.SetActive(true);    //占領されているアイコンをオン
+            m_IconBackGround.color = new Color(occupyingCountry.CountryColor.x, occupyingCountry.CountryColor.y, occupyingCountry.CountryColor.z);  //アイコン背景を占領を行っている国家カラーに
+        }
+
+        if (OccupiedCountry != occupyingCountry) //占領中の国家と占領を行った国家が違う、もしくは占領中の国家がいなかった場合
+        {
+            OccupiedCountry = occupyingCountry;  //占領中の国家を変更
             OccupiedValue = value;              //占領ゲージを初期化＆一段階占領
         }
         else
@@ -415,7 +438,7 @@ public class State : MonoBehaviour
         {
             OccupiedCountry = null;
             OccupiedValue = 0;
-            SetOwner(occupiedCountry);          //支配権を移行
+            SetOwner(occupyingCountry);          //支配権を移行
         }
     }
 
@@ -426,5 +449,28 @@ public class State : MonoBehaviour
     public void SetGuarrisonModel(GameObject obj)
     {
         GuarrisonModel = obj;
+    }
+
+    /// <summary>
+    /// 建物タイプに応じた建築を行う
+    /// </summary>
+    public void ArchitectBuilding(BuildingType type)
+    {
+        int buildingCount = 0;
+
+        foreach (var build in BuildingList)
+        {
+            if (build != BuildingType.None) //何か建物がある場合
+            {
+                buildingCount++;
+            }
+        }
+
+        if (buildingCount >= 3)
+        {
+            return;
+        }
+
+        BuildingList.Add(type);             //建物を追加
     }
 }

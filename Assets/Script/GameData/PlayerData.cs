@@ -54,13 +54,17 @@ public class PlayerData : MonoBehaviour
     public AITendency Tendency { get; private set; }
 
     /// <summary>
-    /// AI勢力の思考を更新
+    /// 防衛的なAIの思考を行う
     /// </summary>
-    public void UpdateAIThinking()
+    public void UpdateAIThinkingOnDefencive()
     {
         ClearActionValueDict();     //行動を決める辞書の中身をクリアする
 
         //---------行動評価フェーズ----------
+
+        var stateDict = CountryData.NeighborStateDict;  //隣接ステートの辞書型
+
+        FieldManager.Instance.SearchNeighborStateForDict(stateDict, CountryData);   //隣接ステートの情報を得る
 
         if (CountryData.EnemyCountryList.Count > 0) //どこかの勢力と戦争中である
         {
@@ -75,6 +79,20 @@ public class PlayerData : MonoBehaviour
                 ActionValueDict[AIActionType.Enlist] += 100;//100点追加
             }
         }
+        else    //平時である
+        {
+            ActionValueDict[AIActionType.Enlist] -= 100;
+        }
+
+        if (stateDict.Count >= CountryData.ForceList.Count) //国境の数よりも軍団が少ない場合
+        {
+            ActionValueDict[AIActionType.Enlist] += 200;    //200点追加
+        }
+        else                                                //軍団数が足りている場合
+        {
+            ActionValueDict[AIActionType.Attack] += 100;    //100点追加
+        }
+
 
         //---------行動評価フェーズEnd----------
 
@@ -82,33 +100,67 @@ public class PlayerData : MonoBehaviour
 
         //---------行動選択フェーズ----------
 
-        if (ThisActionIsMostValuable(AIActionType.Enlist))  //最も有効な行動が「徴兵」ならば
+        switch (MostValuableAction())
         {
-            if (CountryData.Fund > 2000 && CountryData.Resource > 1000)
-            {
-                int soldiers = 1000;
+            case AIActionType.Enlist:   //最も有効な行動が「徴兵」ならば
+                if (CountryData.Fund > 2000 && CountryData.Resource > 1000)
+                {
+                    int soldiers = 1000;
 
-                ForceData force = BattleSystemManager.Instance.SetEnlistData(ForceType.Infantry);
+                    ForceData force = BattleSystemManager.Instance.SetEnlistData(ForceType.Infantry);
 
-                force.Soldiers = soldiers;                  //兵数セット
-                force.OwnerCountryIndex = m_PlayerIndex;    //所有勢力をセット
+                    force.Soldiers = soldiers;                  //兵数セット
+                    force.OwnerCountry = CountryData;    //所有勢力をセット
 
-                CountryData.Enlist(force);
-            }
+                    CountryData.Enlist(force);
+                }
+                break;
+            case AIActionType.Attack:   //最も有効な行動が「攻撃」ならば
+
+                State bestState = null;        //最も攻撃が有効なステート
+                int bestValue = 0;
+                
+                foreach (var state in stateDict.Keys)
+                {
+                    int value = 0;
+
+                    if (state.OwnedCountry == null)     //まず、空ステートならば
+                    {
+                        value = 200;   //200点からスタート
+                    }
+
+                    int stateValue = (state.Income + state.Resource) / 10;  //ステート自身の評価
+
+                    value += stateValue;   //加点
+
+                    if (bestValue < value)
+                    {
+                        bestState = state;  //有効なステートを更新
+                        bestValue = value;
+                    }
+                }
+
+                var randForce = CountryData.GetRandomFreeForce();   //ランダムな軍団を選択
+
+                if (randForce != null)
+                {
+                    FieldManager.Instance.SetForceOnBorder(bestState, randForce);   //選択したステートに軍団を割り当て
+                }
+
+                break;
         }
 
         //---------行動選択フェーズEnd----------
     }
 
+    /// <summary>
+    /// このインスタンスに情報を入力
+    /// </summary>
+    /// <param name="data"></param>
     public void SetCountryData(CountryData data)
     {
         CountryData = data;
         m_PlayerIndex = data.CountryID;
-    }
-
-    public CountryData GetCountryData()
-    {
-        return FieldManager.Instance.GetCountryFromPlayer(this);
     }
 
     public void SetPlayer(bool isPlayer, int index)
@@ -131,7 +183,7 @@ public class PlayerData : MonoBehaviour
     /// <summary>
     /// 辞書型の中で指定したキーが一番大きい値かどうかを判定する
     /// </summary>
-    public bool ThisActionIsMostValuable(AIActionType type)
+    public AIActionType MostValuableAction()
     {
         AIActionType bestAction = AIActionType.None;
         float bestValue = 0f;
@@ -145,11 +197,6 @@ public class PlayerData : MonoBehaviour
             }
         }
 
-        if (bestAction == type) //もし指定したタイプと同じならば正を返す
-        {
-            return true;
-        }
-
-        return false;           //そうじゃなければ負を返す
+        return bestAction;  //一番評価の高い行動を返す
     }
 }

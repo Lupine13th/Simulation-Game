@@ -29,7 +29,7 @@ public class ForceDataUI : MonoBehaviour
         m_MoraleText.SetText(force.Morale + "/" + force.MaxMorale);
         m_AttackText.SetText(force.AttackPower.ToString());
         m_DefenseText.SetText(force.DefensePower.ToString());
-        m_CountryFlagImage.sprite = FieldManager.Instance.CountryList[force.OwnerCountryIndex].CountryFlag;
+        m_CountryFlagImage.sprite = force.OwnerCountry.CountryFlag;
     }
 
     public void OpenEditButton()

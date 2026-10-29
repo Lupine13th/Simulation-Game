@@ -13,7 +13,8 @@ public enum MenuType
     Forces = 2,
     Diplomacy = 3,
     Enlist = 4,
-    Order = 5
+    Order = 5,
+    Building = 6
 }
 
 public enum EditState
@@ -782,4 +783,5 @@ public enum MasterData
     FOGoverment,
     InfantryPreset,
     ForceStatus,
+    Building,
 }

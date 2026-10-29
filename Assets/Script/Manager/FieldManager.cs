@@ -48,6 +48,15 @@ public struct ClickableProvinceData
     public Province proviince;
 }
 
+public struct BuildingData
+{
+    public BuildingType type;
+    public string dispName;
+    public string value;
+    public int fundCost;
+    public int resourceCost;
+}
+
 
 public class FieldManager : SingletonManager<FieldManager>
 {
@@ -119,6 +128,7 @@ public class FieldManager : SingletonManager<FieldManager>
 
     public Dictionary<int, StateData> StateDataDict { get; private set; } = new Dictionary<int, StateData>();   //ステートデータ
     public Dictionary<LIdeology, List<string>> FOGovermentDict { get; private set; } = new Dictionary<LIdeology, List<string>>();
+    public Dictionary<BuildingType, BuildingData> BuildingDataDict { get; private set; } = new Dictionary<BuildingType, BuildingData>();
     public Dictionary<TimeType, int> FieldTime { get; private set; } = new Dictionary<TimeType, int>()
     {
         { TimeType.Year, 2026 },
@@ -185,6 +195,9 @@ public class FieldManager : SingletonManager<FieldManager>
 
         //ステート隣接データを再精査
         CheckAllBorder();
+
+        string buildMasterData = await AddressableManager.Instance.LoadCsvTextAsync(AddressableManager.Instance.MasterAddress[MasterData.Building]);
+        AddressableManager.Instance.ParseCsvBuildingData(buildMasterData, BuildingDataDict);  //stateDataDictにintをキーにデータを入れる
 
         //=====================ステート生成フェーズEnd====================
 
@@ -363,7 +376,7 @@ public class FieldManager : SingletonManager<FieldManager>
 
             if (!country.OwnedPlayerData.IsPlayer)
             {
-                country.OwnedPlayerData.UpdateAIThinking();
+                //country.OwnedPlayerData.UpdateAIThinking();
             }
         }
 
@@ -427,7 +440,6 @@ public class FieldManager : SingletonManager<FieldManager>
     /// </summary>
     public void HighLightBorderAndOwnState()
     {
-
         ClickableProvinceDict.Clear();  //クリック可能なプロヴィンスの辞書をクリア
 
         var borderList = BattleSystemManager.Instance.PlayerCountry.BorderStateList;
@@ -515,7 +527,7 @@ public class FieldManager : SingletonManager<FieldManager>
     /// <param name="force">移動する軍団</param>
     public void SetForceOnBorder(State state, Force force)
     {
-        CountryData country = CountryList[force.OwnerCountryIndex]; //国のデータ
+        CountryData country = force.OwnerCountry; //国のデータ
         int beforeStateId = force.CurrentGuarrisonStateId;  //この軍団が前にいた駐屯ステート
         int beforeBorderId = force.CurrentTargetStateId;    //この軍団が前にいた国境
 
@@ -550,7 +562,10 @@ public class FieldManager : SingletonManager<FieldManager>
             }
         }
 
-        BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
+        if (BattleSystemManager.Instance.PlayerCountry == force.OwnerCountry)
+        {
+            BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
+        }
     }
 
     /// <summary>
@@ -560,7 +575,7 @@ public class FieldManager : SingletonManager<FieldManager>
     /// /// <param name="force">移動する軍団</param>
     public void SetForceOnState(State state, Force force)
     {
-        CountryData country = CountryList[force.OwnerCountryIndex]; //国のデータ
+        CountryData country = force.OwnerCountry; //国のデータ
         int beforeStateId = force.CurrentGuarrisonStateId;  //この軍団が前にいた駐屯ステート
         int beforeBorderId = force.CurrentTargetStateId;    //この軍団が前にいた国境
 
@@ -592,7 +607,10 @@ public class FieldManager : SingletonManager<FieldManager>
             ModelManager.Instance.ChangeGuarrisonModel(true, state, force);    //マス上に駐屯モデルアニメーションを配置
         }
 
-        BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
+        if (BattleSystemManager.Instance.PlayerCountry == force.OwnerCountry)
+        {
+            BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
+        }
     }
 
     /// <summary>
@@ -640,12 +658,15 @@ public class FieldManager : SingletonManager<FieldManager>
 
             if (state.OwnedCountry == country)  //現在のステートが指定した勢力に属している
             {
-                //自分のステートをマークする
-                state.SetStateColor(new Vector3(0.8f, 0.8f, 0.8f));
+                if (country == BattleSystemManager.Instance.PlayerCountry)
+                {
+                    //自分のステートをマークする
+                    state.SetStateColor(new Vector3(0.8f, 0.8f, 0.8f));
 
-                //国境プロヴィンスをマークする
-                borderProvinceList = state.SetStateColorOnBorder();
-
+                    //国境プロヴィンスをマークする
+                    borderProvinceList = state.SetStateColorOnBorder();
+                }
+                
                 foreach (var prov in state.ProvinceList)
                 {
                     if (borderProvinceList.Contains(prov))  //国境プロヴィンスは国境として登録

@@ -16,6 +16,13 @@ public class StateMenu : TacticalMenu
     [SerializeField] private Image m_CultureImage;
     [SerializeField] private Image m_TerrainImage;
 
+    [Header("建物UIのプレハブ")]
+    [SerializeField] private BuildingUI m_BuildingUIPrefab;
+    [Header("建物UIの親")]
+    [SerializeField] private Transform m_BuildingUIParent;
+    [Header("建築ポップアップ")]
+    [SerializeField] private GameObject m_BuildingPopUp;
+
     public override void Init()
     {
         SetStateData(BattleSystemManager.Instance.SelectingState);
@@ -43,6 +50,34 @@ public class StateMenu : TacticalMenu
             m_FlagImage.sprite = null;              //それぞれ空に
         }
 
-        m_TerrainImage.sprite = state.TerrainUI;  //地形
+        m_TerrainImage.sprite = state.TerrainUI;    //地形
+
+        BuildingUI buildUI;
+
+        foreach (var build in state.BuildingList)   //建物の数だけUI表示
+        {
+            if (build != BuildingType.None)         //建物がある場合
+            {
+                buildUI = Instantiate(m_BuildingUIPrefab, m_BuildingUIParent);  //UI生成
+                buildUI.BuidingNameText.SetText(FieldManager.Instance.BuildingDataDict[build].dispName);    //名前テキスト
+                buildUI.BuidingValueText.SetText(FieldManager.Instance.BuildingDataDict[build].value);      //効果テキスト
+            }
+        }
+    }
+
+    /// <summary>
+    /// ポップアップの着脱
+    /// </summary>
+    public void SwitchBuildingPopUp()
+    {
+        switch (m_BuildingPopUp.activeSelf)
+        {
+            case false:
+                m_BuildingPopUp.SetActive(true);
+                break;
+            case true:
+                m_BuildingPopUp.SetActive(false);
+                break;
+        }
     }
 }

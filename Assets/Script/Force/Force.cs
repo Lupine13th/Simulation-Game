@@ -22,7 +22,7 @@ public struct ForceData
     public int FundCost;
     public int ResourceCost;
     public ForceType ForceType;
-    public int OwnerCountryIndex;
+    public CountryData OwnerCountry;
     public float MoveSpeed;
 }
 
@@ -47,7 +47,7 @@ public class Force
     public int FundCost { get; private set; }
     public int ResourceCost { get; private set; }
     public ForceType ForceType { get; private set; }
-    public int OwnerCountryIndex { get; private set; } = -1;
+    public CountryData OwnerCountry { get; private set; }
     public bool IsFighting { get; private set; } = false;
     public float MoveSpeed { get; private set; } = 1;
     public ForceDataUI LinkedUI { get; private set; } = null;
@@ -75,7 +75,7 @@ public class Force
         FundCost = data.FundCost;
         ResourceCost = data.ResourceCost;
         ForceType = data.ForceType;
-        OwnerCountryIndex = data.OwnerCountryIndex;
+        OwnerCountry = data.OwnerCountry;
         MoveSpeed = data.MoveSpeed;
     }
 
@@ -98,7 +98,7 @@ public class Force
     {
         if (FieldManager.Instance.StateList[CurrentTargetStateId].GuarrisonDict.Count == 0)   //’““Ô•”‘à‚ª0•”‘à‚Ìê‡
         {
-            FieldManager.Instance.StateList[CurrentTargetStateId].Occupied(AttackPower, FieldManager.Instance.CountryList[OwnerCountryIndex]);  //NU‚ğs‚¤
+            FieldManager.Instance.StateList[CurrentTargetStateId].Occupied(AttackPower, OwnerCountry);  //NU‚ğs‚¤
         }
     }
 }
