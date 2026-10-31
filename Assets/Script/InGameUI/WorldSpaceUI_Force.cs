@@ -22,6 +22,8 @@ public class WorldSpaceUI_Force : MonoBehaviour
     [Header("防御力")]
     [SerializeField] private TextMeshProUGUI m_DefenceText;
 
+    [SerializeField] public int ID;    //デバッグ用　識別番号
+
     /// <summary>
     /// 軍団のアニメオブジェクト
     /// </summary>
@@ -38,6 +40,14 @@ public class WorldSpaceUI_Force : MonoBehaviour
     public TextMeshProUGUI SoldiersText => m_SoldiersText;
     public TextMeshProUGUI AttackText => m_AttackText;
     public TextMeshProUGUI DefenceText => m_DefenceText;
+
+    public static int TotalCount = 0;
+
+    private void Awake()
+    {
+        ID = TotalCount++;  //識別番号を持たせて、デバッガで追跡可能に
+    }
+
 
     public void SetDatas(Force forcedata, GameObject forceobject)
     {

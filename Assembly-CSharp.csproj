@@ -87,6 +87,7 @@
     <Compile Include="Assets\Script\InGameUI\OrderMenuStateInfo.cs" />
     <Compile Include="Assets\Script\InGameUI\WorldUIManager.cs" />
     <Compile Include="Assets\Script\Manager\AddressableManager.cs" />
+    <Compile Include="Assets\Script\Force\ForceGroup.cs" />
     <Compile Include="Assets\Script\InGameUI\EnlistMenu.cs" />
     <Compile Include="Assets\Script\Manager\SingletonManager.cs" />
     <Compile Include="Assets\Script\InGameUI\OrderUI.cs" />

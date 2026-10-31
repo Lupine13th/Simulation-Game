@@ -20895,12 +20895,16 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1310085120}
     - target: {fileID: 5457979234955667955, guid: 40321499fb981dc48925b33e4cac63cf, type: 3}
+      propertyPath: m_StateCount
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5457979234955667955, guid: 40321499fb981dc48925b33e4cac63cf, type: 3}
       propertyPath: m_StatePrefab
       value: 
       objectReference: {fileID: 4453441211527678794, guid: 69ae0ebf01027554fba067da92fd3c9c, type: 3}
     - target: {fileID: 5457979234955667955, guid: 40321499fb981dc48925b33e4cac63cf, type: 3}
       propertyPath: m_CountryCount
-      value: 5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5457979234955667955, guid: 40321499fb981dc48925b33e4cac63cf, type: 3}
       propertyPath: m_PlayerDataPrefab

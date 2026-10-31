@@ -324,7 +324,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         {
             selectingProvince = hit.collider.GetComponent<Province>(); //クリックしたプロヴィンス
 
-            foreach (var state in FieldManager.Instance.ClickableProvinceDict)  
+            foreach (var state in PlayerCountry.NeighborStateDict)  
             {
                 if (CurrentSelectingStateBorder == state.Key)   //クリックしたプロヴィンスが現在ハイライト中のステートと同じか？
                 {
@@ -362,7 +362,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
             {
                 pointProv = hit.collider.GetComponent<Province>();
 
-                foreach (var list in FieldManager.Instance.ClickableProvinceDict.Values)
+                foreach (var list in PlayerCountry.NeighborStateDict.Values)
                 {
                     foreach (var prov in list)
                     {
@@ -643,7 +643,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     /// <param name="target"></param>
     public void HighLightPointingBorder(State target)
     {
-        var list = FieldManager.Instance.ClickableProvinceDict;
+        var list = PlayerCountry.NeighborStateDict;
 
         if (list.ContainsKey(target))
         {
@@ -660,7 +660,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     /// <param name="target"></param>
     public void HighLightPointingBorderOnUI(State target)
     {
-        var list = FieldManager.Instance.ClickableProvinceDict;
+        var list = PlayerCountry.NeighborStateDict;
 
         if (list.ContainsKey(target))
         {

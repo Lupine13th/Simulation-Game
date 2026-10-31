@@ -146,11 +146,6 @@ public class FieldManager : SingletonManager<FieldManager>
 
     public Dictionary<PlayerData, CountryData> CountryDictPlayerKey { get; private set; } = new Dictionary<PlayerData, CountryData>();
 
-    /// <summary>
-    /// key:ターゲットとするステート value:そのステートに隣接しているプロヴィンスのリスト
-    /// </summary>
-    public Dictionary<State, List<ClickableProvinceData>> ClickableProvinceDict { get; private set; } = new Dictionary<State, List<ClickableProvinceData>>();
-
     private float m_Duration = 0;
 
     /// <summary>
@@ -436,40 +431,13 @@ public class FieldManager : SingletonManager<FieldManager>
     }
 
     /// <summary>
-    /// 駐屯可能な自分のステートと侵攻先の国境のプロヴィンスをハイライト
+    /// この国家にとって駐屯可能なステートと侵攻先の国境のデータをCountryDataに取得させる
     /// </summary>
-    public void HighLightBorderAndOwnState()
+    public void GetBorderAndStateData(CountryData country)
     {
-        ClickableProvinceDict.Clear();  //クリック可能なプロヴィンスの辞書をクリア
+        SearchNeighborStateForDict(country.NeighborStateDict, country);
 
-        var borderList = BattleSystemManager.Instance.PlayerCountry.BorderStateList;
-        var guarrisonList = BattleSystemManager.Instance.PlayerCountry.GuarrisonStateList;
-
-        SearchNeighborStateForDict(ClickableProvinceDict, BattleSystemManager.Instance.PlayerCountry);
-
-        borderList.Clear();
-        guarrisonList.Clear();
-
-        //====================フィールドマネージャからデータを取得===================
-        foreach (var state in ClickableProvinceDict.Keys)
-        {
-            if (GetPlayerFromCountry(state.OwnedCountry) != null)
-            {
-                if (!GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //他ステートをターゲットとする場合
-                {
-                    borderList.Add(state);
-                }
-                else                                            //自分が保有するステートをターゲットとする場合
-                {
-                    guarrisonList.Add(state);
-                }
-            }
-            else                                            //自分が保有するステート以外をターゲットとする場合
-            {
-                borderList.Add(state);
-            }
-        }
-        //====================フィールドマネージャからデータを取得End===================
+        GetSettableBorderAndStateList(country.BorderStateList, country.GuarrisonStateList, country.NeighborStateDict);
     }
 
     public void HighLightProvince()
@@ -481,7 +449,7 @@ public class FieldManager : SingletonManager<FieldManager>
 
             if (GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //国境プロヴィンスの中でもプレイヤーのステートをマーク
             {
-                state.SetStateColorOnBorder();
+                state.GetBorderProvinceList();
             }
         }
     }
@@ -498,7 +466,7 @@ public class FieldManager : SingletonManager<FieldManager>
 
             if (GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //国境プロヴィンスの中でもプレイヤーのステートをマーク
             {
-                state.SetStateColorOnBorder();
+                state.GetBorderProvinceList();
             }
         }
     }
@@ -648,25 +616,27 @@ public class FieldManager : SingletonManager<FieldManager>
     /// <param name="country"></param>
     public void SearchNeighborStateForDict(Dictionary<State, List<ClickableProvinceData>> dict, CountryData country)
     {
+        dict.Clear();   //一旦クリア
+
         //国境の種類を列挙
         var borderProvinceList = new List<Province>();
 
-        foreach (var state in m_StateList)
+        foreach (var state in m_StateList)  //ステートリストからcountryが持つステートを割り出す
         {
             if (state.OwnedCountry == null)
                 continue;
 
             if (state.OwnedCountry == country)  //現在のステートが指定した勢力に属している
             {
-                if (country == BattleSystemManager.Instance.PlayerCountry)
+                if (country == BattleSystemManager.Instance.PlayerCountry)  //呼び出したのがプレイヤーの時のみ
                 {
                     //自分のステートをマークする
                     state.SetStateColor(new Vector3(0.8f, 0.8f, 0.8f));
-
-                    //国境プロヴィンスをマークする
-                    borderProvinceList = state.SetStateColorOnBorder();
                 }
-                
+
+                //国境プロヴィンスの色を変える()
+                borderProvinceList = state.GetBorderProvinceList();
+
                 foreach (var prov in state.ProvinceList)
                 {
                     if (borderProvinceList.Contains(prov))  //国境プロヴィンスは国境として登録
@@ -710,5 +680,37 @@ public class FieldManager : SingletonManager<FieldManager>
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// 部隊配置時に必要なデータを取得させる
+    /// </summary>
+    /// <param name="borders"></param>
+    /// <param name="guarrison"></param>
+    public void GetSettableBorderAndStateList(List<State> borders, List<State> guarrison, Dictionary<State, List<ClickableProvinceData>> neighborDict)
+    {
+        borders.Clear();
+        guarrison.Clear();
+
+        //====================フィールドマネージャからデータを取得===================
+        foreach (var state in neighborDict.Keys)
+        {
+            if (GetPlayerFromCountry(state.OwnedCountry) != null)
+            {
+                if (!GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //他ステートをターゲットとする場合
+                {
+                    borders.Add(state);
+                }
+                else                                            //自分が保有するステートをターゲットとする場合
+                {
+                    guarrison.Add(state);
+                }
+            }
+            else                                            //自分が保有するステート以外をターゲットとする場合
+            {
+                borders.Add(state);
+            }
+        }
+        //====================フィールドマネージャからデータを取得End===================
     }
 }

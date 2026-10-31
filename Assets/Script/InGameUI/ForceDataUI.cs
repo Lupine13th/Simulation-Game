@@ -47,8 +47,8 @@ public class ForceDataUI : MonoBehaviour
     /// </summary>
     public void PlaceForce()
     {
-        FieldManager.Instance.HighLightBorderAndOwnState();   //国境と自ステートをハイライト
-        BattleSystemManager.Instance.OpenOrderMenu(ForceData);    //命令メニュー出現＆Manager内での編集ステートを変更
+        FieldManager.Instance.GetBorderAndStateData(BattleSystemManager.Instance.PlayerCountry);    //国境と自ステートをハイライト
+        BattleSystemManager.Instance.OpenOrderMenu(ForceData);                                      //命令メニュー出現＆Manager内での編集ステートを変更
     }
 
     public void RefreshPositionName()

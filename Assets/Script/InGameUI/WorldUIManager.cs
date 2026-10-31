@@ -113,9 +113,17 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
 
         if (m_ForceUIDict.Count > 0)
         {
+            List<WorldSpaceUI_Force> garbageList = new List<WorldSpaceUI_Force>();  //ほんとは破棄されるべきUI
+
             foreach (var ui in m_ForceUIDict.Values)
             {
-                Vector3 screenPos = m_MainCamera.WorldToScreenPoint(ui.ForceObject.transform.position);   //カメラから見た軍団モデルの位置をキャンバス上の座標に変換
+                if (ui.ForceObject == null) //もし連携しているオブジェクトが空ならば
+                {
+                    garbageList.Add(ui);    //ゴミ箱に入れて
+                    continue;               //スルー
+                }
+
+                Vector3 screenPos = m_MainCamera.WorldToScreenPoint(ui.ForceObject.transform.position);   //カメラから見た軍団モデルの位置をキャンバス上の座標に変換　
 
                 RectTransform forceUiPos = ui.GetComponent<RectTransform>();
 
@@ -126,6 +134,12 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
                     forceUiPos.localPosition = localPoint;
                     forceUiPos.localRotation = Quaternion.identity;
                 }
+            }
+
+            for (int i = 0; i < garbageList.Count; i++)
+            {
+                Destroy(garbageList[i].gameObject); //ゴミ箱の中を処理
+                Destroy(garbageList[i]);            //ゴミ箱の中を処理
             }
         }
 

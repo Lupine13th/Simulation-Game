@@ -273,7 +273,11 @@ public class State : MonoBehaviour
         }
     }
 
-    public List<Province> SetStateColorOnBorder()
+    /// <summary>
+    /// ステート内の国境プロヴィンスを探し出し、プレイヤーの場合は色の変更も行う
+    /// </summary>
+    /// <returns></returns>
+    public List<Province> GetBorderProvinceList()
     {
         List<Province> borderProvinceList = new List<Province>();   //マークした国境プロヴィンスのリストを作成
 
@@ -281,28 +285,18 @@ public class State : MonoBehaviour
         {
             if (FieldManager.Instance.BorderProvinceDict.ContainsKey(prov.ProvincePosition))  //もし国境プロヴィンスだったら(この時点で正しい情報に書き換え済み？)
             {
-                prov.SetProvinceColor(FieldManager.Instance.StateColorDict[StateColorType.Border]);   //国境プロヴィンスを国境カラーに
+                if (OwnedCountry == BattleSystemManager.Instance.PlayerCountry)
+                {
+                    prov.SetProvinceColor(FieldManager.Instance.StateColorDict[StateColorType.Border]);   //国境プロヴィンスを国境カラーに
+                }
                 borderProvinceList.Add(prov);
             }
             else
             {
-                prov.SetProvinceColor(FieldManager.Instance.StateColorDict[StateColorType.Garrison]);   //駐屯プロヴィンスを駐屯カラーに
-            }
-        }
-
-        return borderProvinceList;  //マークしたプロヴィンスを返す
-    }
-
-    public List<Province> SetStateColorOnGarrison()
-    {
-        List<Province> borderProvinceList = new List<Province>();   //マークした国境プロヴィンスのリストを作成
-
-        foreach (var prov in m_ProvinceList)    //このステートのプロヴィンスの中で
-        {
-            if (FieldManager.Instance.BorderProvinceDict.ContainsKey(prov.ProvincePosition))  //もし国境プロヴィンスだったら(この時点で正しい情報に書き換え済み？)
-            {
-                prov.SetProvinceColor(FieldManager.Instance.StateColorDict[StateColorType.Border]);   //国境プロヴィンスを国境カラーに
-                borderProvinceList.Add(prov);
+                if (OwnedCountry == BattleSystemManager.Instance.PlayerCountry)
+                {
+                    prov.SetProvinceColor(FieldManager.Instance.StateColorDict[StateColorType.Garrison]);   //駐屯プロヴィンスを駐屯カラーに
+                }
             }
         }
 

@@ -64,6 +64,8 @@ public class PlayerData : MonoBehaviour
 
         var stateDict = CountryData.NeighborStateDict;  //隣接ステートの辞書型
 
+        FieldManager.Instance.GetBorderAndStateData(CountryData);
+
         FieldManager.Instance.SearchNeighborStateForDict(stateDict, CountryData);   //隣接ステートの情報を得る
 
         if (CountryData.EnemyCountryList.Count > 0) //どこかの勢力と戦争中である
@@ -126,7 +128,7 @@ public class PlayerData : MonoBehaviour
 
                     if (state.OwnedCountry == null)     //まず、空ステートならば
                     {
-                        value = 200;   //200点からスタート
+                        value = 500;   //200点からスタート
                     }
 
                     int stateValue = (state.Income + state.Resource) / 10;  //ステート自身の評価

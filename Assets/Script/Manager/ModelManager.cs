@@ -50,12 +50,12 @@ public class ModelManager : SingletonManager<ModelManager>
                 {
                     Vector3 borderMidPos = Vector3.zero;
 
-                    foreach (var prov in FieldManager.Instance.ClickableProvinceDict[target]) //指定したステートの国境のプロヴィンスを取得
+                    foreach (var prov in country.NeighborStateDict[target]) //指定したステートの国境のプロヴィンスを取得
                     {
                         borderMidPos += prov.proviince.transform.position;
                     }
 
-                    borderMidPos = borderMidPos / FieldManager.Instance.ClickableProvinceDict[target].Count;  //平均値を取って国境の中央座標を取得
+                    borderMidPos = borderMidPos / country.NeighborStateDict[target].Count;  //平均値を取って国境の中央座標を取得
 
                     GameObject model = Instantiate(BattleSystemManager.Instance.SoldierPrefab, borderMidPos, Quaternion.identity, transform); //モデル生成
 

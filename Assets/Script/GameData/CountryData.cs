@@ -100,7 +100,7 @@ public class CountryData
     public List<CountryData> AlliesCountryList { get; private set; } = new List<CountryData>();
 
     /// <summary>
-    /// 部隊を配置可能な国境のリスト
+    /// 部隊を配置可能な国境のリスト(プレイヤーが使用)
     /// </summary>
     public List<State> BorderStateList { get; private set; } = new List<State>();
 
@@ -127,7 +127,7 @@ public class CountryData
     /// <summary>
     /// 隣のステート
     /// </summary>
-    public List<State> NeighberStateList { get; private set; } = new List<State>();
+    public List<State> NeighborStateList { get; private set; } = new List<State>();
 
     private const string kLeaderPortraitFolderPath = "Assets/Texture/Portrait/Leader";
 
@@ -318,9 +318,9 @@ public class CountryData
     /// <param name="state"></param>
     public void SetNeighberState(State state)
     {
-        if (!NeighberStateList.Contains(state))
+        if (!NeighborStateList.Contains(state))
         {
-            NeighberStateList.Add(state);
+            NeighborStateList.Add(state);
         }
     }
 
