@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -19,6 +18,15 @@ public enum StatusDataType
     MoveSpeed = 6,
     FundCost = 7,
     ResourceCost = 8,
+}
+
+public enum BuildingDataType
+{
+    Type = 0,
+    DispName = 1,
+    Value = 2,
+    FundCost = 3,
+    ResourceCost = 4,
 }
 
 public enum AnimationType
@@ -40,6 +48,7 @@ public class AddressableManager : SingletonManager<AddressableManager>
         {MasterData.FOGoverment, "FOGovermentMasterData" },
         {MasterData.ForceStatus, "ForceStatusMasterData" },
         {MasterData.InfantryPreset, "InfantryPresetMasterData" },
+        {MasterData.Building, "BuildingMasterData" },
     };
 
     public Dictionary<AnimationType, string> AnimationAddress { get; private set; } = new Dictionary<AnimationType, string>()
@@ -175,6 +184,47 @@ public class AddressableManager : SingletonManager<AddressableManager>
                 data.ResourceCost = int.Parse(values[(int)StatusDataType.ResourceCost]);//資源コストを挿入
 
                 statusDataDict[result] = data;  //データを挿入
+            }
+        }
+    }
+
+    ///<summary>
+    ///CSVファイルから建築物情報を読み取る
+    /// </summary>
+    public void ParseCsvBuildingData(string csv, Dictionary<BuildingType, BuildingData> buildingDict)   //CSVデータを行ごとに並び替え(引数２は状況に応じて変わるため必要)
+    {
+        using (StringReader reader = new StringReader(csv))
+        {
+            string line;
+            bool isHeader = true;
+
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (isHeader)
+                {
+                    isHeader = false;
+                    continue;           //一列目は説明だから無視
+                }
+
+                string[] values = line.Split(",");
+
+                BuildingData data = new BuildingData();
+
+                if (Enum.TryParse(values[(int)BuildingDataType.Type], ignoreCase: true, out BuildingType result))   //兵種名が兵種のenumと一致しているか
+                {
+                    data.type = result;
+                }
+                else
+                {
+                    continue;   //無い場合、次の列へ
+                }
+
+                data.dispName = values[(int)BuildingDataType.DispName];                     //表示名を挿入
+                data.value = values[(int)BuildingDataType.Value];                           //効果を挿入
+                data.fundCost = int.Parse(values[(int)BuildingDataType.FundCost]);          //資金コストを挿入
+                data.resourceCost = int.Parse(values[(int)BuildingDataType.ResourceCost]);  //資源コストを挿入
+
+                buildingDict[result] = data;  //データを挿入
             }
         }
     }

@@ -120,6 +120,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ae6c8891a5c53c648b50184917628e5c
+    m_Address: BuildingMasterData
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: b7175ad2f9c717f459d51adedd873ebc
     m_Address: Volnia
     m_ReadOnly: 0

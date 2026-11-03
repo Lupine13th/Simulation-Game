@@ -22,7 +22,7 @@ public struct ForceData
     public int FundCost;
     public int ResourceCost;
     public ForceType ForceType;
-    public int OwnerCountryIndex;
+    public CountryData OwnerCountry;
     public float MoveSpeed;
 }
 
@@ -47,20 +47,25 @@ public class Force
     public int FundCost { get; private set; }
     public int ResourceCost { get; private set; }
     public ForceType ForceType { get; private set; }
-    public int OwnerCountryIndex { get; private set; } = -1;
+    public CountryData OwnerCountry { get; private set; }
     public bool IsFighting { get; private set; } = false;
     public float MoveSpeed { get; private set; } = 1;
     public ForceDataUI LinkedUI { get; private set; } = null;
 
     /// <summary>
+    /// Š‘®‚µ‚Ä‚¢‚éŒR’c
+    /// </summary>
+    public ForceGroup BelongGroup { get; private set; }
+
+    /// <summary>
     /// Œ»İUŒ‚‚ğs‚Á‚Ä‚¢‚éƒXƒe[ƒg‚ÌID
     /// </summary>
-    public int CurrentTargetStateId { get; private set; } = -1;
+    public State CurrentTargetState { get; private set; }
 
     /// <summary>
     /// Œ»İ’““Ô‚ğs‚Á‚Ä‚¢‚éƒXƒe[ƒg‚ÌID
     /// </summary>
-    public int CurrentGuarrisonStateId { get; private set; } = -1;
+    public State CurrentGuarrisonState { get; private set; }
 
     public void SetForceData(ForceData data)
     {
@@ -75,18 +80,18 @@ public class Force
         FundCost = data.FundCost;
         ResourceCost = data.ResourceCost;
         ForceType = data.ForceType;
-        OwnerCountryIndex = data.OwnerCountryIndex;
+        OwnerCountry = data.OwnerCountry;
         MoveSpeed = data.MoveSpeed;
     }
 
-    public void SetTargetState(int i)
+    public void SetTargetState(State state)
     {
-        CurrentTargetStateId = i;
+        CurrentTargetState = state;
     }
 
-    public void SetGuarrisonState(int i)
+    public void SetGuarrisonState(State state)
     {
-        CurrentGuarrisonStateId = i;
+        CurrentGuarrisonState = state;
     }
 
     public void SetLinkedUI(ForceDataUI ui)
@@ -94,11 +99,20 @@ public class Force
         LinkedUI = ui;
     }
 
+    /// <summary>
+    /// Š‘®‚µ‚Ä‚¢‚é‘åŒR’c‚ğƒZƒbƒg
+    /// </summary>
+    /// <param name="force"></param>
+    public void SetBelongGroup(ForceGroup force)
+    {
+        BelongGroup = force;
+    }
+
     public void Conquest()
     {
-        if (FieldManager.Instance.StateList[CurrentTargetStateId].GuarrisonDict.Count == 0)   //’““Ô•”‘à‚ª0•”‘à‚Ìê‡
+        if (CurrentTargetState.GuarrisonDict.Count == 0)   //’““Ô•”‘à‚ª0•”‘à‚Ìê‡
         {
-            FieldManager.Instance.StateList[CurrentTargetStateId].Occupied(AttackPower, FieldManager.Instance.CountryList[OwnerCountryIndex]);  //NU‚ğs‚¤
+            CurrentTargetState.Occupied(AttackPower, OwnerCountry);  //NU‚ğs‚¤
         }
     }
 }

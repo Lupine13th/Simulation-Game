@@ -90,6 +90,16 @@ public class CountryData
     public List<Force> ForceList { get; private set; } = new List<Force>();
 
     /// <summary>
+    /// 攻撃中の大軍団のリスト
+    /// </summary>
+    public Dictionary<State, ForceGroup> AttackingForceGroupDict { get; private set; } = new Dictionary<State, ForceGroup>();
+
+    /// <summary>
+    /// 駐屯中の大軍団のリスト
+    /// </summary>
+    public Dictionary<State, ForceGroup> GuardingForceGroupDict { get; private set; } = new Dictionary<State, ForceGroup>();
+
+    /// <summary>
     /// 戦争中の勢力のリスト
     /// </summary>
     public List<CountryData> EnemyCountryList { get; private set; } = new List<CountryData>();
@@ -100,7 +110,7 @@ public class CountryData
     public List<CountryData> AlliesCountryList { get; private set; } = new List<CountryData>();
 
     /// <summary>
-    /// 部隊を配置可能な国境のリスト
+    /// 部隊を配置可能な国境のリスト(プレイヤーが使用)
     /// </summary>
     public List<State> BorderStateList { get; private set; } = new List<State>();
 
@@ -115,6 +125,11 @@ public class CountryData
     public Dictionary<State, GameObject> BattleModelDict { get; private set; } = new Dictionary<State, GameObject>();
 
     /// <summary>
+    /// key:ターゲットとするステート value:そのステートに隣接しているプロヴィンスのリスト
+    /// </summary>
+    public Dictionary<State, List<ClickableProvinceData>> NeighborStateDict { get; private set; } = new Dictionary<State, List<ClickableProvinceData>>();
+
+    /// <summary>
     /// この国家のプレイヤー
     /// </summary>
     public PlayerData OwnedPlayerData { get; private set; }
@@ -122,7 +137,7 @@ public class CountryData
     /// <summary>
     /// 隣のステート
     /// </summary>
-    public List<State> NeighberStateList { get; private set; } = new List<State>();
+    public List<State> NeighborStateList { get; private set; } = new List<State>();
 
     private const string kLeaderPortraitFolderPath = "Assets/Texture/Portrait/Leader";
 
@@ -284,7 +299,7 @@ public class CountryData
     }
 
     /// <summary>
-    /// 対象の勢力と戦争状態になる
+    /// 対象の勢力と同盟状態になる
     /// </summary>
     /// <param name="targetdata"></param>
     public void FormAlliance(CountryData targetdata)
@@ -313,9 +328,9 @@ public class CountryData
     /// <param name="state"></param>
     public void SetNeighberState(State state)
     {
-        if (!NeighberStateList.Contains(state))
+        if (!NeighborStateList.Contains(state))
         {
-            NeighberStateList.Add(state);
+            NeighborStateList.Add(state);
         }
     }
 
@@ -328,13 +343,13 @@ public class CountryData
 
         int currentAllSoldiers = 0;                         //現在の勢力の総兵数
 
-        foreach (var force in ForceList)
+        foreach (var force in AttackingForceGroupDict.Values)
         {
-            currentAllSoldiers += force.Soldiers;           //軍団ごとの値を入力
+            currentAllSoldiers += force.AllSoldier;           //軍団ごとの値を入力
 
-            if (force.CurrentTargetStateId != -1)           //現在侵略中のステートがあれば
+            if (force.AttackingState != null)           //現在侵略中のステートがあれば
             {
-                force.Conquest();                           //侵略を行わせる
+                force.GetListHead().Conquest();                //先頭の軍団に侵略を行わせる
             }                              
         }
 
@@ -369,12 +384,22 @@ public class CountryData
             }
         }
 
-        if (FieldManager.Instance.GetPlayerFromCountry(this).IsPlayer)    //もしプレイヤー国家だったら
+        if (OwnedPlayerData.IsPlayer)    //もしプレイヤー国家だったら
         {
             SetInventryUI();
         }
 
         //====================「リソース」に関する情報の更新End===================
+
+
+        //====================「AI思考」の更新===================
+
+        if (!OwnedPlayerData.IsPlayer)    //もしプレイヤー国家じゃなかったら
+        {
+            OwnedPlayerData.UpdateAIThinkingOnDefencive();  //AIの思考を更新
+        }
+
+        //====================「AI思考」の更新End===================
     }
 
     /// <summary>
@@ -448,7 +473,7 @@ public class CountryData
 
         foreach (var force in ForceList)
         {
-            if (force.CurrentGuarrisonStateId == state.StateID) //駐屯ステートと一致する
+            if (force.CurrentGuarrisonState == state) //駐屯ステートと一致する
             {
                 guarrisonList.Add(force);
             }
@@ -467,13 +492,39 @@ public class CountryData
 
         foreach (var force in ForceList)
         {
-            if (force.CurrentTargetStateId == state.StateID)    //侵攻ステートと一致する
+            if (force.CurrentTargetState == state)    //侵攻ステートと一致する
             {
                 forceList.Add(force);
             }
         }
 
         return forceList;
+    }
+
+    /// <summary>
+    /// 駐屯中の軍団でランダムな軍団を返す
+    /// </summary>
+    /// <returns></returns>
+    public Force GetRandomFreeForce()
+    {
+        List<Force> freeForceList = new List<Force>();  //現在、駐屯中の軍団
+
+        foreach(var force in ForceList)
+        {
+            if (force.CurrentTargetState == null)   //ターゲットが無い軍団の場合
+            {
+                freeForceList.Add(force);   //リストに追加
+            }
+        }
+
+        if (freeForceList.Count == 0)   //自由な部隊が無ければ
+        {
+            return null;
+        }
+
+        var randomindex = Random.Range(0, freeForceList.Count); //インデックス内で乱数を取る
+
+        return freeForceList[randomindex];
     }
 }
 

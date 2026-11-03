@@ -106,6 +106,7 @@ public class EnlistMenu : TacticalMenu
 
         newforce.ForcesName = m_ForcesNameInput.text;   //ŒR’c–¼“ü—Í
         newforce.Soldiers = SoldierValue;               //•º”“ü—Í
+        newforce.OwnerCountry = countryData;
 
         NewForcesData = newforce;
 

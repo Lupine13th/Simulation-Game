@@ -31,7 +31,7 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     /// <summary>
     /// 軍団UIの辞書型
     /// </summary>
-    private Dictionary<Force, WorldSpaceUI_Force> m_ForceUIDict= new Dictionary<Force, WorldSpaceUI_Force>();
+    private Dictionary<ForceGroup, WorldSpaceUI_Force> m_ForceUIDict= new Dictionary<ForceGroup, WorldSpaceUI_Force>();
 
     /// <summary>
     /// ステート上のアイコンの辞書型
@@ -113,9 +113,17 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
 
         if (m_ForceUIDict.Count > 0)
         {
+            List<WorldSpaceUI_Force> garbageList = new List<WorldSpaceUI_Force>();  //ほんとは破棄されるべきUI
+
             foreach (var ui in m_ForceUIDict.Values)
             {
-                Vector3 screenPos = m_MainCamera.WorldToScreenPoint(ui.ForceObject.transform.position);   //カメラから見た軍団モデルの位置をキャンバス上の座標に変換
+                if (ui.ForceObject == null) //もし連携しているオブジェクトが空ならば
+                {
+                    garbageList.Add(ui);    //ゴミ箱に入れて
+                    continue;               //スルー
+                }
+
+                Vector3 screenPos = m_MainCamera.WorldToScreenPoint(ui.ForceObject.transform.position);   //カメラから見た軍団モデルの位置をキャンバス上の座標に変換　
 
                 RectTransform forceUiPos = ui.GetComponent<RectTransform>();
 
@@ -127,6 +135,12 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
                     forceUiPos.localRotation = Quaternion.identity;
                 }
             }
+
+            for (int i = 0; i < garbageList.Count; i++)
+            {
+                Destroy(garbageList[i].gameObject); //ゴミ箱の中を処理
+                Destroy(garbageList[i]);            //ゴミ箱の中を処理
+            }
         }
 
         //==================軍団UI更新End====================
@@ -137,7 +151,7 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     /// </summary>
     /// <param name="force">その軍団のデータ</param>
     /// <param name="model">軍団のアニメオブジェクト</param>
-    public void InstantiateForceUI(Force force, GameObject model)
+    public void InstantiateForceUI(ForceGroup force, GameObject model)
     {
         WorldSpaceUI_Force ui = Instantiate(m_ForceUIPrefab, m_ForceUIParent);  //UI生成
         m_ForceUIDict[force] = ui;                                              //辞書型に追加
@@ -151,7 +165,7 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     /// 軍団が消えた時or移動時にUIを消す
     /// </summary>
     /// <param name="force">その軍団のデータ</param>
-    public void RemoveForceUI(Force force)
+    public void RemoveForceUI(ForceGroup force)
     {
         if (m_ForceUIDict.ContainsKey(force))
         {
@@ -202,13 +216,15 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     {
         foreach (var force in m_ForceUIDict)
         {
-            force.Value.FlagImage.sprite = FieldManager.Instance.CountryList[force.Key.OwnerCountryIndex].CountryFlag;  //国旗データ入力
-            force.Value.ForceNameText.SetText(force.Key.ForcesName);            //軍団の名前を入力
-            force.Value.SoldiersText.SetText(force.Key.Soldiers.ToString());    //軍団の兵数を入力
-            force.Value.AttackText.SetText(force.Key.AttackPower.ToString());   //軍団の攻撃力を入力
-            force.Value.DefenceText.SetText(force.Key.DefensePower.ToString()); //軍団の防御力を入力
+            var headForce = force.Key.GetListHead();
 
-            Vector3 color = FieldManager.Instance.CountryList[force.Key.OwnerCountryIndex].CountryColor;    //国家カラー取得
+            force.Value.FlagImage.sprite = headForce.OwnerCountry.CountryFlag;  //国旗データ入力
+            force.Value.ForceNameText.SetText(headForce.ForcesName);            //軍団の名前を入力
+            force.Value.SoldiersText.SetText(force.Key.UpdateDatas().ToString());    //軍団の兵数を入力
+            force.Value.AttackText.SetText(headForce.AttackPower.ToString());   //軍団の攻撃力を入力
+            force.Value.DefenceText.SetText(headForce.DefensePower.ToString()); //軍団の防御力を入力
+
+            Vector3 color = headForce.OwnerCountry.CountryColor;    //国家カラー取得
             force.Value.BackGround.color = new Color(color.x, color.y, color.z);                            //背景に適応
         }
     }

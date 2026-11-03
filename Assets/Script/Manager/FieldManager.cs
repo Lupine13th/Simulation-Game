@@ -48,6 +48,15 @@ public struct ClickableProvinceData
     public Province proviince;
 }
 
+public struct BuildingData
+{
+    public BuildingType type;
+    public string dispName;
+    public string value;
+    public int fundCost;
+    public int resourceCost;
+}
+
 
 public class FieldManager : SingletonManager<FieldManager>
 {
@@ -119,6 +128,7 @@ public class FieldManager : SingletonManager<FieldManager>
 
     public Dictionary<int, StateData> StateDataDict { get; private set; } = new Dictionary<int, StateData>();   //ステートデータ
     public Dictionary<LIdeology, List<string>> FOGovermentDict { get; private set; } = new Dictionary<LIdeology, List<string>>();
+    public Dictionary<BuildingType, BuildingData> BuildingDataDict { get; private set; } = new Dictionary<BuildingType, BuildingData>();
     public Dictionary<TimeType, int> FieldTime { get; private set; } = new Dictionary<TimeType, int>()
     {
         { TimeType.Year, 2026 },
@@ -135,11 +145,6 @@ public class FieldManager : SingletonManager<FieldManager>
     };
 
     public Dictionary<PlayerData, CountryData> CountryDictPlayerKey { get; private set; } = new Dictionary<PlayerData, CountryData>();
-
-    /// <summary>
-    /// key:ターゲットとするステート value:そのステートに隣接しているプロヴィンスのリスト
-    /// </summary>
-    public Dictionary<State, List<ClickableProvinceData>> ClickableProvinceDict { get; private set; } = new Dictionary<State, List<ClickableProvinceData>>();
 
     private float m_Duration = 0;
 
@@ -185,6 +190,9 @@ public class FieldManager : SingletonManager<FieldManager>
 
         //ステート隣接データを再精査
         CheckAllBorder();
+
+        string buildMasterData = await AddressableManager.Instance.LoadCsvTextAsync(AddressableManager.Instance.MasterAddress[MasterData.Building]);
+        AddressableManager.Instance.ParseCsvBuildingData(buildMasterData, BuildingDataDict);  //stateDataDictにintをキーにデータを入れる
 
         //=====================ステート生成フェーズEnd====================
 
@@ -363,7 +371,7 @@ public class FieldManager : SingletonManager<FieldManager>
 
             if (!country.OwnedPlayerData.IsPlayer)
             {
-                country.OwnedPlayerData.UpdateAIThinking();
+                //country.OwnedPlayerData.UpdateAIThinking();
             }
         }
 
@@ -423,98 +431,13 @@ public class FieldManager : SingletonManager<FieldManager>
     }
 
     /// <summary>
-    /// 駐屯可能な自分のステートと侵攻先の国境のプロヴィンスをハイライト
+    /// この国家にとって駐屯可能なステートと侵攻先の国境のデータをCountryDataに取得させる
     /// </summary>
-    public void HighLightBorderAndOwnState()
+    public void GetBorderAndStateData(CountryData country)
     {
-        //国境の種類を列挙
-        List<Province> borderProvinceList = new List<Province>();
+        SearchNeighborStateForDict(country.NeighborStateDict, country);
 
-        ClickableProvinceDict.Clear();  //クリック可能なプロヴィンスの辞書をクリア
-
-        var borderList = BattleSystemManager.Instance.PlayerCountry.BorderStateList;
-        var guarrisonList = BattleSystemManager.Instance.PlayerCountry.GuarrisonStateList;
-
-        foreach (var state in m_StateList)
-        {
-            if (state.OwnedCountry == null)
-                continue;
-
-            if (GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //国境プロヴィンスの中でもプレイヤーのステートをマーク
-            {
-                //自分のステートをマークする
-                state.SetStateColor(new Vector3(0.8f, 0.8f, 0.8f));
-
-                //国境プロヴィンスをマークする
-                borderProvinceList = state.SetStateColorOnBorder();
-
-                foreach (var prov in state.ProvinceList)
-                {
-                    if (borderProvinceList.Contains(prov))  //国境プロヴィンスは国境として登録
-                    {
-                        foreach (var nState in prov.NeighberStateList)  //そのプロヴィンスが隣接しているステートの数分、回す(複数のステートと隣接している場合にしっかりとUIとデータに反映するため)
-                        {
-                            /*if (!state.OwnedCountry.EnemyCountryList.Contains(nState.state.OwnedCountry) || nState.state.OwnedCountry != null)  //敵対している勢力と空ステート以外は無視
-                            {
-                                continue;
-                            }*/
-
-                            if (nState.state.OwnedCountry != null)  //そのステートはどこかの勢力に領有されている
-                            {
-                                if (!state.OwnedCountry.EnemyCountryList.Contains(nState.state.OwnedCountry))   //かつ、その隣接しているステートの勢力と現在のステートの勢力が戦争状態に無い
-                                {
-                                    continue;   //戦争状態じゃない勢力には攻め込めないため、無視
-                                }
-                            }
-
-                            if (ClickableProvinceDict.ContainsKey(nState.state))    //既にそのステートデータで辞書が作られているか
-                            {
-                                ClickableProvinceDict[nState.state].Add(new ClickableProvinceData() { type = ForcePositionType.Border, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov });
-                            }
-                            else
-                            {
-                                ClickableProvinceDict.Add(nState.state, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Border, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov } });
-                            }
-                        }
-                    }
-                    else                                    //国境プロヴィンスじゃない場合は駐屯地として登録
-                    {
-                        if (ClickableProvinceDict.ContainsKey(prov.OwnedState))
-                        {
-                            ClickableProvinceDict[prov.OwnedState].Add(new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = new List<State>() { prov.OwnedState }, proviince = prov });
-                        }
-                        else
-                        {
-                            ClickableProvinceDict.Add(prov.OwnedState, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov } });
-                        }
-                    }
-                }
-            }
-        }
-
-        borderList.Clear();
-        guarrisonList.Clear();
-
-        //====================フィールドマネージャからデータを取得===================
-        foreach (var state in ClickableProvinceDict.Keys)
-        {
-            if (GetPlayerFromCountry(state.OwnedCountry) != null)
-            {
-                if (!GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //他ステートをターゲットとする場合
-                {
-                    borderList.Add(state);
-                }
-                else                                            //自分が保有するステートをターゲットとする場合
-                {
-                    guarrisonList.Add(state);
-                }
-            }
-            else                                            //自分が保有するステート以外をターゲットとする場合
-            {
-                borderList.Add(state);
-            }
-        }
-        //====================フィールドマネージャからデータを取得End===================
+        GetSettableBorderAndStateList(country.BorderStateList, country.GuarrisonStateList, country.NeighborStateDict);
     }
 
     public void HighLightProvince()
@@ -526,7 +449,7 @@ public class FieldManager : SingletonManager<FieldManager>
 
             if (GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //国境プロヴィンスの中でもプレイヤーのステートをマーク
             {
-                state.SetStateColorOnBorder();
+                state.GetBorderProvinceList();
             }
         }
     }
@@ -543,7 +466,7 @@ public class FieldManager : SingletonManager<FieldManager>
 
             if (GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //国境プロヴィンスの中でもプレイヤーのステートをマーク
             {
-                state.SetStateColorOnBorder();
+                state.GetBorderProvinceList();
             }
         }
     }
@@ -568,34 +491,52 @@ public class FieldManager : SingletonManager<FieldManager>
     /// <summary>
     /// 国境赴任任務を設定
     /// </summary>
-    /// <param name="state">BorderStateListでのインデックス</param>
+    /// <param name="state">移動先ステート</param>
     /// <param name="force">移動する軍団</param>
     public void SetForceOnBorder(State state, Force force)
     {
-        CountryData country = CountryList[force.OwnerCountryIndex]; //国のデータ
-        int beforeStateId = force.CurrentGuarrisonStateId;  //この軍団が前にいた駐屯ステート
-        int beforeBorderId = force.CurrentTargetStateId;    //この軍団が前にいた国境
+        CountryData country = force.OwnerCountry; //国のデータ
+        State beforeState = force.CurrentGuarrisonState;  //この軍団が前にいた駐屯ステート
+        State beforeBorder = force.CurrentTargetState;    //この軍団が前にいた国境
 
-        force.SetTargetState(state.StateID);    //攻撃目標を設定
-        force.SetGuarrisonState(-1);            //駐屯ステートを初期化
+        force.SetTargetState(state);                //攻撃目標を設定
+        force.SetGuarrisonState(null);              //駐屯ステートを初期化
+
+        //===========モデルに関する処理==========
 
         force.LinkedUI.RefreshPositionName();   //UIの駐屯地テキストを更新
 
         country.RefreshBattleModelDict();       //モデル用の辞書型を更新
 
-        if (beforeStateId != -1)
+        if (beforeState != null)
         {
-            if (country.CheckForceOnThisState(StateList[beforeStateId]).Count == 0)                 //移動前の駐屯ステートに兵が居なければ
+            if (country.CheckForceOnThisState(beforeState).Count == 0)                 //移動前の駐屯ステートに兵が居なければ
             {
-                ModelManager.Instance.ChangeGuarrisonModel(false, StateList[beforeStateId], force);        //マス上のモデルを削除
+                if (country.GuardingForceGroupDict.ContainsKey(beforeState))    //ヌルチェック
+                {
+                    country.GuardingForceGroupDict.Remove(beforeState);         //大軍団データ削除
+                }
+                ModelManager.Instance.ChangeGuarrisonModel(false, StateList[beforeState.StateID], force.BelongGroup);   //マス上のモデルを削除
+            }
+            else
+            {
+                country.GuardingForceGroupDict[beforeState].ThisPlaceForceList.Remove(force);
             }
         }
 
-        if (beforeBorderId != -1)
+        if (beforeBorder != null)
         {
-            if (country.CheckForceOnThisStatesBorder(StateList[beforeBorderId]).Count == 0)         //移動前の国境に兵が居なければ
+            if (country.CheckForceOnThisStatesBorder(beforeBorder).Count == 0)         //移動前の国境に兵が居なければ
             {
-                ModelManager.Instance.ChangeBattleModel(false, StateList[beforeBorderId], country, force); //国境のモデルを削除
+                if (country.AttackingForceGroupDict.ContainsKey(beforeBorder))    //ヌルチェック
+                {
+                    country.AttackingForceGroupDict.Remove(beforeBorder);         //大軍団データ削除
+                }
+                ModelManager.Instance.ChangeBattleModel(false, StateList[beforeBorder.StateID], country, force.BelongGroup); //国境のモデルを削除
+            }
+            else
+            {
+                country.AttackingForceGroupDict[beforeBorder].ThisPlaceForceList.Remove(force);
             }
         }
 
@@ -603,53 +544,110 @@ public class FieldManager : SingletonManager<FieldManager>
         {
             if (country.BattleModelDict[state] == null) //モデルが配置されて居なかったら
             {
-                ModelManager.Instance.ChangeBattleModel(true, state, country, force);  //国境沿いに侵攻アニメーションのモデルを配置
+                var group = new ForceGroup();
+
+                group.SetAttackState(state);   //駐屯ステートを登録
+                group.ThisPlaceForceList.Add(force);    //この軍団を大軍団に加える
+                group.UpdateDatas();
+
+                country.AttackingForceGroupDict.Add(state, group);            //駐屯中のステートにおける大軍団データを生成
+
+                force.SetBelongGroup(country.AttackingForceGroupDict[state]);            //軍団側に大軍団ポインタを与える
+                ModelManager.Instance.ChangeBattleModel(true, state, country, force.BelongGroup);   //国境沿いに侵攻アニメーションのモデルを配置
+            }
+            else
+            {
+                country.AttackingForceGroupDict[state].ThisPlaceForceList.Add(force);    //この軍団を大軍団に加える
+                country.AttackingForceGroupDict[state].SetAttackState(state);      //攻撃ステートを登録
+                force.SetBelongGroup(country.AttackingForceGroupDict[state]);            //軍団側に大軍団ポインタを与える
             }
         }
 
-        BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
+        if (BattleSystemManager.Instance.PlayerCountry == force.OwnerCountry)   //プレイヤー国家なら
+        {
+            BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
+        }
+
+        //===========モデルに関する処理==========
     }
 
     /// <summary>
     /// 駐屯任務を設定
     /// </summary>
-    /// <param name="state">GurrisonStateListでのインデックス</param>
+    /// <param name="state">移動先ステート</param>
     /// /// <param name="force">移動する軍団</param>
     public void SetForceOnState(State state, Force force)
     {
-        CountryData country = CountryList[force.OwnerCountryIndex]; //国のデータ
-        int beforeStateId = force.CurrentGuarrisonStateId;  //この軍団が前にいた駐屯ステート
-        int beforeBorderId = force.CurrentTargetStateId;    //この軍団が前にいた国境
+        CountryData country = force.OwnerCountry; //国のデータ
+        State beforeState = force.CurrentGuarrisonState;  //この軍団が前にいた駐屯ステート
+        State beforeBorder = force.CurrentTargetState;    //この軍団が前にいた国境
 
-        force.SetTargetState(-1);                   //攻撃目標を設定
-        force.SetGuarrisonState(state.StateID);     //駐屯ステートを初期化
+        force.SetTargetState(null);                     //攻撃目標を設定
+        force.SetGuarrisonState(state);                 //駐屯ステートを初期化
 
+        //===========モデルに関する処理==========
+        
         force.LinkedUI.RefreshPositionName();       //UIの現在地を更新
 
         country.RefreshBattleModelDict();       //モデル用の辞書型を更新
 
-        if (beforeStateId != -1)
+        if (beforeState != null)
         {
-            if (country.CheckForceOnThisState(StateList[beforeStateId]).Count == 0)         //移動前の駐屯ステートに兵が居なければ
+            if (country.CheckForceOnThisState(beforeState).Count == 0)         //移動前の駐屯ステートに兵が居なければ
             {
-                ModelManager.Instance.ChangeGuarrisonModel(false, StateList[beforeStateId], force);//マス上のモデルを削除
+                if (country.GuardingForceGroupDict.ContainsKey(beforeState))    //ヌルチェック
+                {
+                    country.GuardingForceGroupDict.Remove(beforeState);         //大軍団データ削除
+                }
+                ModelManager.Instance.ChangeGuarrisonModel(false, StateList[beforeState.StateID], force.BelongGroup);//マス上のモデルを削除
+            }
+            else
+            {
+                country.GuardingForceGroupDict[beforeState].ThisPlaceForceList.Remove(force);
             }
         }
 
-        if (beforeBorderId != -1)
+        if (beforeBorder != null)
         {
-            if (country.CheckForceOnThisStatesBorder(StateList[beforeBorderId]).Count == 0)  //移動前の国境に兵が居なければ
+            if (country.CheckForceOnThisStatesBorder(beforeBorder).Count == 0)  //移動前の国境に兵が居なければ
             {
-                ModelManager.Instance.ChangeBattleModel(false, StateList[beforeBorderId], country, force); //国境のモデルを削除
+                if (country.AttackingForceGroupDict.ContainsKey(beforeBorder))    //ヌルチェック
+                {
+                    country.AttackingForceGroupDict.Remove(beforeBorder);         //大軍団データ削除
+                }
+                ModelManager.Instance.ChangeBattleModel(false, StateList[beforeBorder.StateID], country, force.BelongGroup); //国境のモデルを削除
+            }
+            else
+            {
+                country.AttackingForceGroupDict[beforeBorder].ThisPlaceForceList.Remove(force);
             }
         }
 
         if (state.GuarrisonModel == null)       //駐屯モデルが居なければ
         {
-            ModelManager.Instance.ChangeGuarrisonModel(true, state, force);    //マス上に駐屯モデルアニメーションを配置
+            var group = new ForceGroup();
+            group.SetGuarrisonState(state);   //駐屯ステートを登録
+            group.ThisPlaceForceList.Add(force);    //この軍団を大軍団に加える
+            group.UpdateDatas();
+
+            country.GuardingForceGroupDict.Add(state, group);            //駐屯中のステートにおける大軍団データを生成
+
+            force.SetBelongGroup(country.GuardingForceGroupDict[state]);            //軍団側に大軍団ポインタを与える
+            ModelManager.Instance.ChangeGuarrisonModel(true, state, force.BelongGroup);    //マス上に駐屯モデルアニメーションを配置
+        }
+        else
+        {
+            country.GuardingForceGroupDict[state].ThisPlaceForceList.Add(force);    //この軍団を大軍団に加える
+            country.GuardingForceGroupDict[state].SetGuarrisonState(state);   //駐屯ステートを登録
+            force.SetBelongGroup(country.GuardingForceGroupDict[state]);            //軍団側に大軍団ポインタを与える
         }
 
-        BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
+        if (BattleSystemManager.Instance.PlayerCountry == force.OwnerCountry)
+        {
+            BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
+        }
+
+        //===========モデルに関する処理==========
     }
 
     /// <summary>
@@ -678,5 +676,110 @@ public class FieldManager : SingletonManager<FieldManager>
         {
             return states;      //リストを返す
         }
+    }
+
+    /// <summary>
+    /// ステートをキー、隣接プロヴィンスデータを値とする辞書型に勢力を指定してデータを入れる
+    /// /// </summary>
+    /// <param name="dict"></param>
+    /// <param name="country"></param>
+    public void SearchNeighborStateForDict(Dictionary<State, List<ClickableProvinceData>> dict, CountryData country)
+    {
+        dict.Clear();   //一旦クリア
+
+        //国境の種類を列挙
+        var borderProvinceList = new List<Province>();
+
+        foreach (var state in m_StateList)  //ステートリストからcountryが持つステートを割り出す
+        {
+            if (state.OwnedCountry == null)
+                continue;
+
+            if (state.OwnedCountry == country)  //現在のステートが指定した勢力に属している
+            {
+                if (country == BattleSystemManager.Instance.PlayerCountry)  //呼び出したのがプレイヤーの時のみ
+                {
+                    //自分のステートをマークする
+                    state.SetStateColor(new Vector3(0.8f, 0.8f, 0.8f));
+                }
+
+                //国境プロヴィンスの色を変える()
+                borderProvinceList = state.GetBorderProvinceList();
+
+                foreach (var prov in state.ProvinceList)
+                {
+                    if (borderProvinceList.Contains(prov))  //国境プロヴィンスは国境として登録
+                    {
+                        foreach (var nState in prov.NeighberStateList)  //そのプロヴィンスが隣接しているステートの数分、回す(複数のステートと隣接している場合にしっかりとUIとデータに反映するため)
+                        {
+                            /*if (!state.OwnedCountry.EnemyCountryList.Contains(nState.state.OwnedCountry) || nState.state.OwnedCountry != null)  //敵対している勢力と空ステート以外は無視
+                            {
+                                continue;
+                            }*/
+
+                            if (nState.state.OwnedCountry != null)  //そのステートはどこかの勢力に領有されている
+                            {
+                                if (!state.OwnedCountry.EnemyCountryList.Contains(nState.state.OwnedCountry))   //かつ、その隣接しているステートの勢力と現在のステートの勢力が戦争状態に無い
+                                {
+                                    continue;   //戦争状態じゃない勢力には攻め込めないため、無視
+                                }
+                            }
+
+                            if (dict.ContainsKey(nState.state))    //既にそのステートデータで辞書が作られているか
+                            {
+                                dict[nState.state].Add(new ClickableProvinceData() { type = ForcePositionType.Border, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov });
+                            }
+                            else
+                            {
+                                dict.Add(nState.state, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Border, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov } });
+                            }
+                        }
+                    }
+                    else                                    //国境プロヴィンスじゃない場合は駐屯地として登録
+                    {
+                        if (dict.ContainsKey(prov.OwnedState))
+                        {
+                            dict[prov.OwnedState].Add(new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = new List<State>() { prov.OwnedState }, proviince = prov });
+                        }
+                        else
+                        {
+                            dict.Add(prov.OwnedState, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov } });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 部隊配置時に必要なデータを取得させる
+    /// </summary>
+    /// <param name="borders"></param>
+    /// <param name="guarrison"></param>
+    public void GetSettableBorderAndStateList(List<State> borders, List<State> guarrison, Dictionary<State, List<ClickableProvinceData>> neighborDict)
+    {
+        borders.Clear();
+        guarrison.Clear();
+
+        //====================フィールドマネージャからデータを取得===================
+        foreach (var state in neighborDict.Keys)
+        {
+            if (GetPlayerFromCountry(state.OwnedCountry) != null)
+            {
+                if (!GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //他ステートをターゲットとする場合
+                {
+                    borders.Add(state);
+                }
+                else                                            //自分が保有するステートをターゲットとする場合
+                {
+                    guarrison.Add(state);
+                }
+            }
+            else                                            //自分が保有するステート以外をターゲットとする場合
+            {
+                borders.Add(state);
+            }
+        }
+        //====================フィールドマネージャからデータを取得End===================
     }
 }

@@ -1,4 +1,5 @@
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -29,7 +30,7 @@ public class ForceDataUI : MonoBehaviour
         m_MoraleText.SetText(force.Morale + "/" + force.MaxMorale);
         m_AttackText.SetText(force.AttackPower.ToString());
         m_DefenseText.SetText(force.DefensePower.ToString());
-        m_CountryFlagImage.sprite = FieldManager.Instance.CountryList[force.OwnerCountryIndex].CountryFlag;
+        m_CountryFlagImage.sprite = force.OwnerCountry.CountryFlag;
     }
 
     public void OpenEditButton()
@@ -47,20 +48,20 @@ public class ForceDataUI : MonoBehaviour
     /// </summary>
     public void PlaceForce()
     {
-        FieldManager.Instance.HighLightBorderAndOwnState();   //国境と自ステートをハイライト
-        BattleSystemManager.Instance.OpenOrderMenu(ForceData);    //命令メニュー出現＆Manager内での編集ステートを変更
+        FieldManager.Instance.GetBorderAndStateData(BattleSystemManager.Instance.PlayerCountry);    //国境と自ステートをハイライト
+        BattleSystemManager.Instance.OpenOrderMenu(ForceData);                                      //命令メニュー出現＆Manager内での編集ステートを変更
     }
 
     public void RefreshPositionName()
     {
-        if (ForceData.CurrentTargetStateId != -1)
+        if (ForceData.CurrentTargetState != null)
         {
-            m_PositionNameText.SetText(FieldManager.Instance.StateList[ForceData.CurrentTargetStateId].StateNameJP);
+            m_PositionNameText.SetText(ForceData.CurrentTargetState.StateNameJP);
             m_PositionConstantText.SetText("にて戦闘中");
         }
-        else if (ForceData.CurrentGuarrisonStateId != -1)
+        else if (ForceData.CurrentGuarrisonState != null)
         {
-            m_PositionNameText.SetText(FieldManager.Instance.StateList[ForceData.CurrentGuarrisonStateId].StateNameJP);
+            m_PositionNameText.SetText(ForceData.CurrentGuarrisonState.StateNameJP);
             m_PositionConstantText.SetText("にて駐屯中");
         }
     }
