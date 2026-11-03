@@ -491,34 +491,52 @@ public class FieldManager : SingletonManager<FieldManager>
     /// <summary>
     /// 国境赴任任務を設定
     /// </summary>
-    /// <param name="state">BorderStateListでのインデックス</param>
+    /// <param name="state">移動先ステート</param>
     /// <param name="force">移動する軍団</param>
     public void SetForceOnBorder(State state, Force force)
     {
         CountryData country = force.OwnerCountry; //国のデータ
-        int beforeStateId = force.CurrentGuarrisonStateId;  //この軍団が前にいた駐屯ステート
-        int beforeBorderId = force.CurrentTargetStateId;    //この軍団が前にいた国境
+        State beforeState = force.CurrentGuarrisonState;  //この軍団が前にいた駐屯ステート
+        State beforeBorder = force.CurrentTargetState;    //この軍団が前にいた国境
 
-        force.SetTargetState(state.StateID);    //攻撃目標を設定
-        force.SetGuarrisonState(-1);            //駐屯ステートを初期化
+        force.SetTargetState(state);                //攻撃目標を設定
+        force.SetGuarrisonState(null);              //駐屯ステートを初期化
+
+        //===========モデルに関する処理==========
 
         force.LinkedUI.RefreshPositionName();   //UIの駐屯地テキストを更新
 
         country.RefreshBattleModelDict();       //モデル用の辞書型を更新
 
-        if (beforeStateId != -1)
+        if (beforeState != null)
         {
-            if (country.CheckForceOnThisState(StateList[beforeStateId]).Count == 0)                 //移動前の駐屯ステートに兵が居なければ
+            if (country.CheckForceOnThisState(beforeState).Count == 0)                 //移動前の駐屯ステートに兵が居なければ
             {
-                ModelManager.Instance.ChangeGuarrisonModel(false, StateList[beforeStateId], force);        //マス上のモデルを削除
+                if (country.GuardingForceGroupDict.ContainsKey(beforeState))    //ヌルチェック
+                {
+                    country.GuardingForceGroupDict.Remove(beforeState);         //大軍団データ削除
+                }
+                ModelManager.Instance.ChangeGuarrisonModel(false, StateList[beforeState.StateID], force.BelongGroup);   //マス上のモデルを削除
+            }
+            else
+            {
+                country.GuardingForceGroupDict[beforeState].ThisPlaceForceList.Remove(force);
             }
         }
 
-        if (beforeBorderId != -1)
+        if (beforeBorder != null)
         {
-            if (country.CheckForceOnThisStatesBorder(StateList[beforeBorderId]).Count == 0)         //移動前の国境に兵が居なければ
+            if (country.CheckForceOnThisStatesBorder(beforeBorder).Count == 0)         //移動前の国境に兵が居なければ
             {
-                ModelManager.Instance.ChangeBattleModel(false, StateList[beforeBorderId], country, force); //国境のモデルを削除
+                if (country.AttackingForceGroupDict.ContainsKey(beforeBorder))    //ヌルチェック
+                {
+                    country.AttackingForceGroupDict.Remove(beforeBorder);         //大軍団データ削除
+                }
+                ModelManager.Instance.ChangeBattleModel(false, StateList[beforeBorder.StateID], country, force.BelongGroup); //国境のモデルを削除
+            }
+            else
+            {
+                country.AttackingForceGroupDict[beforeBorder].ThisPlaceForceList.Remove(force);
             }
         }
 
@@ -526,59 +544,110 @@ public class FieldManager : SingletonManager<FieldManager>
         {
             if (country.BattleModelDict[state] == null) //モデルが配置されて居なかったら
             {
-                ModelManager.Instance.ChangeBattleModel(true, state, country, force);  //国境沿いに侵攻アニメーションのモデルを配置
+                var group = new ForceGroup();
+
+                group.SetAttackState(state);   //駐屯ステートを登録
+                group.ThisPlaceForceList.Add(force);    //この軍団を大軍団に加える
+                group.UpdateDatas();
+
+                country.AttackingForceGroupDict.Add(state, group);            //駐屯中のステートにおける大軍団データを生成
+
+                force.SetBelongGroup(country.AttackingForceGroupDict[state]);            //軍団側に大軍団ポインタを与える
+                ModelManager.Instance.ChangeBattleModel(true, state, country, force.BelongGroup);   //国境沿いに侵攻アニメーションのモデルを配置
+            }
+            else
+            {
+                country.AttackingForceGroupDict[state].ThisPlaceForceList.Add(force);    //この軍団を大軍団に加える
+                country.AttackingForceGroupDict[state].SetAttackState(state);      //攻撃ステートを登録
+                force.SetBelongGroup(country.AttackingForceGroupDict[state]);            //軍団側に大軍団ポインタを与える
             }
         }
 
-        if (BattleSystemManager.Instance.PlayerCountry == force.OwnerCountry)
+        if (BattleSystemManager.Instance.PlayerCountry == force.OwnerCountry)   //プレイヤー国家なら
         {
             BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
         }
+
+        //===========モデルに関する処理==========
     }
 
     /// <summary>
     /// 駐屯任務を設定
     /// </summary>
-    /// <param name="state">GurrisonStateListでのインデックス</param>
+    /// <param name="state">移動先ステート</param>
     /// /// <param name="force">移動する軍団</param>
     public void SetForceOnState(State state, Force force)
     {
         CountryData country = force.OwnerCountry; //国のデータ
-        int beforeStateId = force.CurrentGuarrisonStateId;  //この軍団が前にいた駐屯ステート
-        int beforeBorderId = force.CurrentTargetStateId;    //この軍団が前にいた国境
+        State beforeState = force.CurrentGuarrisonState;  //この軍団が前にいた駐屯ステート
+        State beforeBorder = force.CurrentTargetState;    //この軍団が前にいた国境
 
-        force.SetTargetState(-1);                   //攻撃目標を設定
-        force.SetGuarrisonState(state.StateID);     //駐屯ステートを初期化
+        force.SetTargetState(null);                     //攻撃目標を設定
+        force.SetGuarrisonState(state);                 //駐屯ステートを初期化
 
+        //===========モデルに関する処理==========
+        
         force.LinkedUI.RefreshPositionName();       //UIの現在地を更新
 
         country.RefreshBattleModelDict();       //モデル用の辞書型を更新
 
-        if (beforeStateId != -1)
+        if (beforeState != null)
         {
-            if (country.CheckForceOnThisState(StateList[beforeStateId]).Count == 0)         //移動前の駐屯ステートに兵が居なければ
+            if (country.CheckForceOnThisState(beforeState).Count == 0)         //移動前の駐屯ステートに兵が居なければ
             {
-                ModelManager.Instance.ChangeGuarrisonModel(false, StateList[beforeStateId], force);//マス上のモデルを削除
+                if (country.GuardingForceGroupDict.ContainsKey(beforeState))    //ヌルチェック
+                {
+                    country.GuardingForceGroupDict.Remove(beforeState);         //大軍団データ削除
+                }
+                ModelManager.Instance.ChangeGuarrisonModel(false, StateList[beforeState.StateID], force.BelongGroup);//マス上のモデルを削除
+            }
+            else
+            {
+                country.GuardingForceGroupDict[beforeState].ThisPlaceForceList.Remove(force);
             }
         }
 
-        if (beforeBorderId != -1)
+        if (beforeBorder != null)
         {
-            if (country.CheckForceOnThisStatesBorder(StateList[beforeBorderId]).Count == 0)  //移動前の国境に兵が居なければ
+            if (country.CheckForceOnThisStatesBorder(beforeBorder).Count == 0)  //移動前の国境に兵が居なければ
             {
-                ModelManager.Instance.ChangeBattleModel(false, StateList[beforeBorderId], country, force); //国境のモデルを削除
+                if (country.AttackingForceGroupDict.ContainsKey(beforeBorder))    //ヌルチェック
+                {
+                    country.AttackingForceGroupDict.Remove(beforeBorder);         //大軍団データ削除
+                }
+                ModelManager.Instance.ChangeBattleModel(false, StateList[beforeBorder.StateID], country, force.BelongGroup); //国境のモデルを削除
+            }
+            else
+            {
+                country.AttackingForceGroupDict[beforeBorder].ThisPlaceForceList.Remove(force);
             }
         }
 
         if (state.GuarrisonModel == null)       //駐屯モデルが居なければ
         {
-            ModelManager.Instance.ChangeGuarrisonModel(true, state, force);    //マス上に駐屯モデルアニメーションを配置
+            var group = new ForceGroup();
+            group.SetGuarrisonState(state);   //駐屯ステートを登録
+            group.ThisPlaceForceList.Add(force);    //この軍団を大軍団に加える
+            group.UpdateDatas();
+
+            country.GuardingForceGroupDict.Add(state, group);            //駐屯中のステートにおける大軍団データを生成
+
+            force.SetBelongGroup(country.GuardingForceGroupDict[state]);            //軍団側に大軍団ポインタを与える
+            ModelManager.Instance.ChangeGuarrisonModel(true, state, force.BelongGroup);    //マス上に駐屯モデルアニメーションを配置
+        }
+        else
+        {
+            country.GuardingForceGroupDict[state].ThisPlaceForceList.Add(force);    //この軍団を大軍団に加える
+            country.GuardingForceGroupDict[state].SetGuarrisonState(state);   //駐屯ステートを登録
+            force.SetBelongGroup(country.GuardingForceGroupDict[state]);            //軍団側に大軍団ポインタを与える
         }
 
         if (BattleSystemManager.Instance.PlayerCountry == force.OwnerCountry)
         {
             BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
         }
+
+        //===========モデルに関する処理==========
     }
 
     /// <summary>

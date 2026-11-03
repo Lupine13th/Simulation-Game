@@ -1,4 +1,5 @@
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -53,14 +54,14 @@ public class ForceDataUI : MonoBehaviour
 
     public void RefreshPositionName()
     {
-        if (ForceData.CurrentTargetStateId != -1)
+        if (ForceData.CurrentTargetState != null)
         {
-            m_PositionNameText.SetText(FieldManager.Instance.StateList[ForceData.CurrentTargetStateId].StateNameJP);
+            m_PositionNameText.SetText(ForceData.CurrentTargetState.StateNameJP);
             m_PositionConstantText.SetText("Ç…ÇƒêÌì¨íÜ");
         }
-        else if (ForceData.CurrentGuarrisonStateId != -1)
+        else if (ForceData.CurrentGuarrisonState != null)
         {
-            m_PositionNameText.SetText(FieldManager.Instance.StateList[ForceData.CurrentGuarrisonStateId].StateNameJP);
+            m_PositionNameText.SetText(ForceData.CurrentGuarrisonState.StateNameJP);
             m_PositionConstantText.SetText("Ç…Çƒíìì‘íÜ");
         }
     }

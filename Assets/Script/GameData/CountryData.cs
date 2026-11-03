@@ -90,6 +90,16 @@ public class CountryData
     public List<Force> ForceList { get; private set; } = new List<Force>();
 
     /// <summary>
+    /// 攻撃中の大軍団のリスト
+    /// </summary>
+    public Dictionary<State, ForceGroup> AttackingForceGroupDict { get; private set; } = new Dictionary<State, ForceGroup>();
+
+    /// <summary>
+    /// 駐屯中の大軍団のリスト
+    /// </summary>
+    public Dictionary<State, ForceGroup> GuardingForceGroupDict { get; private set; } = new Dictionary<State, ForceGroup>();
+
+    /// <summary>
     /// 戦争中の勢力のリスト
     /// </summary>
     public List<CountryData> EnemyCountryList { get; private set; } = new List<CountryData>();
@@ -333,13 +343,13 @@ public class CountryData
 
         int currentAllSoldiers = 0;                         //現在の勢力の総兵数
 
-        foreach (var force in ForceList)
+        foreach (var force in AttackingForceGroupDict.Values)
         {
-            currentAllSoldiers += force.Soldiers;           //軍団ごとの値を入力
+            currentAllSoldiers += force.AllSoldier;           //軍団ごとの値を入力
 
-            if (force.CurrentTargetStateId != -1)           //現在侵略中のステートがあれば
+            if (force.AttackingState != null)           //現在侵略中のステートがあれば
             {
-                force.Conquest();                           //侵略を行わせる
+                force.GetListHead().Conquest();                //先頭の軍団に侵略を行わせる
             }                              
         }
 
@@ -463,7 +473,7 @@ public class CountryData
 
         foreach (var force in ForceList)
         {
-            if (force.CurrentGuarrisonStateId == state.StateID) //駐屯ステートと一致する
+            if (force.CurrentGuarrisonState == state) //駐屯ステートと一致する
             {
                 guarrisonList.Add(force);
             }
@@ -482,7 +492,7 @@ public class CountryData
 
         foreach (var force in ForceList)
         {
-            if (force.CurrentTargetStateId == state.StateID)    //侵攻ステートと一致する
+            if (force.CurrentTargetState == state)    //侵攻ステートと一致する
             {
                 forceList.Add(force);
             }
@@ -501,7 +511,7 @@ public class CountryData
 
         foreach(var force in ForceList)
         {
-            if (force.CurrentTargetStateId == -1)   //ターゲットが無い軍団の場合
+            if (force.CurrentTargetState == null)   //ターゲットが無い軍団の場合
             {
                 freeForceList.Add(force);   //リストに追加
             }

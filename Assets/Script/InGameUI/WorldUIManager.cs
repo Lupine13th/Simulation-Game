@@ -31,7 +31,7 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     /// <summary>
     /// ŒR’cUI‚Ì«‘Œ^
     /// </summary>
-    private Dictionary<Force, WorldSpaceUI_Force> m_ForceUIDict= new Dictionary<Force, WorldSpaceUI_Force>();
+    private Dictionary<ForceGroup, WorldSpaceUI_Force> m_ForceUIDict= new Dictionary<ForceGroup, WorldSpaceUI_Force>();
 
     /// <summary>
     /// ƒXƒe[ƒgã‚ÌƒAƒCƒRƒ“‚Ì«‘Œ^
@@ -151,7 +151,7 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     /// </summary>
     /// <param name="force">‚»‚ÌŒR’c‚Ìƒf[ƒ^</param>
     /// <param name="model">ŒR’c‚ÌƒAƒjƒƒIƒuƒWƒFƒNƒg</param>
-    public void InstantiateForceUI(Force force, GameObject model)
+    public void InstantiateForceUI(ForceGroup force, GameObject model)
     {
         WorldSpaceUI_Force ui = Instantiate(m_ForceUIPrefab, m_ForceUIParent);  //UI¶¬
         m_ForceUIDict[force] = ui;                                              //«‘Œ^‚É’Ç‰Á
@@ -165,7 +165,7 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     /// ŒR’c‚ªÁ‚¦‚½orˆÚ“®‚ÉUI‚ğÁ‚·
     /// </summary>
     /// <param name="force">‚»‚ÌŒR’c‚Ìƒf[ƒ^</param>
-    public void RemoveForceUI(Force force)
+    public void RemoveForceUI(ForceGroup force)
     {
         if (m_ForceUIDict.ContainsKey(force))
         {
@@ -216,13 +216,15 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     {
         foreach (var force in m_ForceUIDict)
         {
-            force.Value.FlagImage.sprite = force.Key.OwnerCountry.CountryFlag;  //‘Šøƒf[ƒ^“ü—Í
-            force.Value.ForceNameText.SetText(force.Key.ForcesName);            //ŒR’c‚Ì–¼‘O‚ğ“ü—Í
-            force.Value.SoldiersText.SetText(force.Key.Soldiers.ToString());    //ŒR’c‚Ì•º”‚ğ“ü—Í
-            force.Value.AttackText.SetText(force.Key.AttackPower.ToString());   //ŒR’c‚ÌUŒ‚—Í‚ğ“ü—Í
-            force.Value.DefenceText.SetText(force.Key.DefensePower.ToString()); //ŒR’c‚Ì–hŒä—Í‚ğ“ü—Í
+            var headForce = force.Key.GetListHead();
 
-            Vector3 color = force.Key.OwnerCountry.CountryColor;    //‘‰ÆƒJƒ‰[æ“¾
+            force.Value.FlagImage.sprite = headForce.OwnerCountry.CountryFlag;  //‘Šøƒf[ƒ^“ü—Í
+            force.Value.ForceNameText.SetText(headForce.ForcesName);            //ŒR’c‚Ì–¼‘O‚ğ“ü—Í
+            force.Value.SoldiersText.SetText(force.Key.UpdateDatas().ToString());    //ŒR’c‚Ì•º”‚ğ“ü—Í
+            force.Value.AttackText.SetText(headForce.AttackPower.ToString());   //ŒR’c‚ÌUŒ‚—Í‚ğ“ü—Í
+            force.Value.DefenceText.SetText(headForce.DefensePower.ToString()); //ŒR’c‚Ì–hŒä—Í‚ğ“ü—Í
+
+            Vector3 color = headForce.OwnerCountry.CountryColor;    //‘‰ÆƒJƒ‰[æ“¾
             force.Value.BackGround.color = new Color(color.x, color.y, color.z);                            //”wŒi‚É“K‰
         }
     }

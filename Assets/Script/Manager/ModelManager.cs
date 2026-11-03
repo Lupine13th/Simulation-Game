@@ -6,7 +6,7 @@ public class ModelManager : SingletonManager<ModelManager>
     /// 駐屯モデル変更
     /// </summary>
     /// <param name="on"></param>
-    public void ChangeGuarrisonModel(bool on, State target, Force force)
+    public void ChangeGuarrisonModel(bool on, State target, ForceGroup force)
     {
         switch (on)
         {
@@ -41,7 +41,7 @@ public class ModelManager : SingletonManager<ModelManager>
     /// </summary>
     /// <param name="on"></param>
     /// <param name="target">侵攻先のステート</param>
-    public void ChangeBattleModel(bool on, State target, CountryData country, Force force)
+    public void ChangeBattleModel(bool on, State target, CountryData country, ForceGroup force)
     {
         switch (on)
         {

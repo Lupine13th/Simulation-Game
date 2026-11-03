@@ -32,7 +32,7 @@ public class WorldSpaceUI_Force : MonoBehaviour
     /// <summary>
     /// åRícÇÃÉfÅ[É^
     /// </summary>
-    public Force ForceData { get; private set; }
+    public ForceGroup ForceData { get; private set; }
 
     public Image FlagImage => m_FlagImage;
     public Image BackGround => m_BackGround;
@@ -49,7 +49,7 @@ public class WorldSpaceUI_Force : MonoBehaviour
     }
 
 
-    public void SetDatas(Force forcedata, GameObject forceobject)
+    public void SetDatas(ForceGroup forcedata, GameObject forceobject)
     {
         ForceData = forcedata;
         ForceObject = forceobject;
