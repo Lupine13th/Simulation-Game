@@ -21,8 +21,6 @@ public class ModelManager : SingletonManager<ModelManager>
                     anim.Play(AddressableManager.Instance.AnimationAddress[AnimationType.Idle]);    //アイドル状態              //TODO:Animatorはややこしいので一旦スルー
 
                     WorldUIManager.Instance.InstantiateForceUI(force, model);   //モデル追従用のUIを生成
-
-                    Debug.Log("駐屯モデル生成：" + target.StateNameJP);
                 }
                 break;
             case false:  //駐屯モデルオフ
@@ -30,7 +28,6 @@ public class ModelManager : SingletonManager<ModelManager>
                 {
                     WorldUIManager.Instance.RemoveForceUI(force);   //UI削除
                     Destroy(target.GuarrisonModel);                 //モデル削除
-                    Debug.Log("駐屯モデル削除：" + target.StateNameJP);
                 }
                 break;
         }
@@ -46,16 +43,17 @@ public class ModelManager : SingletonManager<ModelManager>
         switch (on)
         {
             case true:  //攻撃モデルオン
+                if (!country.BattleModelDict.ContainsKey(target)) break;
                 if (country.BattleModelDict[target] == null) //ステート状のモデルがいない場合
                 {
                     Vector3 borderMidPos = Vector3.zero;
 
-                    foreach (var prov in country.NeighborStateDict[target]) //指定したステートの国境のプロヴィンスを取得
+                    foreach (var prov in country.RelateStateDict[target]) //指定したステートの国境のプロヴィンスを取得
                     {
                         borderMidPos += prov.proviince.transform.position;
                     }
 
-                    borderMidPos = borderMidPos / country.NeighborStateDict[target].Count;  //平均値を取って国境の中央座標を取得
+                    borderMidPos = borderMidPos / country.RelateStateDict[target].Count;  //平均値を取って国境の中央座標を取得
 
                     GameObject model = Instantiate(BattleSystemManager.Instance.SoldierPrefab, borderMidPos, Quaternion.identity, transform); //モデル生成
 
@@ -65,16 +63,14 @@ public class ModelManager : SingletonManager<ModelManager>
                     anim.Play(AddressableManager.Instance.AnimationAddress[AnimationType.Fire]);    //アイドル状態              //TODO:Animatorはややこしいので一旦スルー
 
                     WorldUIManager.Instance.InstantiateForceUI(force, model);   //モデル追従用のUIを生成
-
-                    Debug.Log("駐屯モデル生成：" + target.StateNameJP);
                 }
                 break;
             case false:  //攻撃モデルオフ
+                if (!country.BattleModelDict.ContainsKey(target)) break;
                 if (country.BattleModelDict[target] != null) //ステート状のモデルがいる場合
                 {
                     WorldUIManager.Instance.RemoveForceUI(force);   //UI削除
                     Destroy(country.BattleModelDict[target]);       //モデル削除
-                    Debug.Log("駐屯モデル削除：" + target.StateNameJP);
                 }
                 break;
         }

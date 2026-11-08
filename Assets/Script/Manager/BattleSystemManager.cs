@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public enum MenuType
 { 
@@ -105,6 +106,11 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.F1))
+        {
+            SceneManager.LoadScene("SampleScene");
+        }
+
         if (Input.GetKeyDown(KeyCode.Tab))    //TAB入力
         {
             ChangeCameraOrder();
@@ -324,7 +330,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         {
             selectingProvince = hit.collider.GetComponent<Province>(); //クリックしたプロヴィンス
 
-            foreach (var state in PlayerCountry.NeighborStateDict)  
+            foreach (var state in PlayerCountry.RelateStateDict)  
             {
                 if (CurrentSelectingStateBorder == state.Key)   //クリックしたプロヴィンスが現在ハイライト中のステートと同じか？
                 {
@@ -362,7 +368,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
             {
                 pointProv = hit.collider.GetComponent<Province>();
 
-                foreach (var list in PlayerCountry.NeighborStateDict.Values)
+                foreach (var list in PlayerCountry.RelateStateDict.Values)
                 {
                     foreach (var prov in list)
                     {
@@ -643,7 +649,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     /// <param name="target"></param>
     public void HighLightPointingBorder(State target)
     {
-        var list = PlayerCountry.NeighborStateDict;
+        var list = PlayerCountry.RelateStateDict;
 
         if (list.ContainsKey(target))
         {
@@ -660,7 +666,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     /// <param name="target"></param>
     public void HighLightPointingBorderOnUI(State target)
     {
-        var list = PlayerCountry.NeighborStateDict;
+        var list = PlayerCountry.RelateStateDict;
 
         if (list.ContainsKey(target))
         {

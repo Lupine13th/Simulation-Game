@@ -19,7 +19,11 @@ public class ForcesMenu : TacticalMenu
         CloseEnlistMenu();                                              //’¥•ºƒƒjƒ…[‚ğ•Â‚¶‚é
     }
 
-    public void SetCountryForce(CountryData country)
+    /// <summary>
+    /// ‚±‚Ì¨—Í‚ªŠ—L‚·‚éŒR’c•ª‚ÌUI‚ğ¶¬‚·‚é
+    /// </summary>
+    /// <param name="country"></param>
+    public void InstanciateForceDataUI(CountryData country)
     {
         foreach (var force in country.ForceList)
         {
@@ -108,6 +112,6 @@ public class ForcesMenu : TacticalMenu
 
         m_ForceUIList.Clear();
 
-        SetCountryForce(country);
+        InstanciateForceDataUI(country);
     }
 }

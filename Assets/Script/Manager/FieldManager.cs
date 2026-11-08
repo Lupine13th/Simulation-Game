@@ -435,9 +435,9 @@ public class FieldManager : SingletonManager<FieldManager>
     /// </summary>
     public void GetBorderAndStateData(CountryData country)
     {
-        SearchNeighborStateForDict(country.NeighborStateDict, country);
+        SearchNeighborStateForDict(country.RelateStateDict, country);     //隣接ステートの情報を取得
 
-        GetSettableBorderAndStateList(country.BorderStateList, country.GuarrisonStateList, country.NeighborStateDict);
+        GetSettableBorderAndStateList(country, country.RelateStateDict);  //隣接ステート
     }
 
     public void HighLightProvince()
@@ -504,7 +504,10 @@ public class FieldManager : SingletonManager<FieldManager>
 
         //===========モデルに関する処理==========
 
-        force.LinkedUI.RefreshPositionName();   //UIの駐屯地テキストを更新
+        if (country == BattleSystemManager.Instance.PlayerCountry)  //このメソッドを呼んだのがプレイヤーの場合
+        {
+            force.LinkedUI.RefreshPositionName();       //UIの現在地を更新
+        }
 
         country.RefreshBattleModelDict();       //モデル用の辞書型を更新
 
@@ -520,7 +523,7 @@ public class FieldManager : SingletonManager<FieldManager>
             }
             else
             {
-                country.GuardingForceGroupDict[beforeState].ThisPlaceForceList.Remove(force);
+                country.GuardingForceGroupDict[beforeState].ThisPlaceForceList.Remove(force);   //もとの位置の部隊を消す
             }
         }
 
@@ -536,7 +539,7 @@ public class FieldManager : SingletonManager<FieldManager>
             }
             else
             {
-                country.AttackingForceGroupDict[beforeBorder].ThisPlaceForceList.Remove(force);
+                country.AttackingForceGroupDict[beforeBorder].ThisPlaceForceList.Remove(force); //もとの位置の部隊を消す
             }
         }
 
@@ -557,9 +560,9 @@ public class FieldManager : SingletonManager<FieldManager>
             }
             else
             {
-                country.AttackingForceGroupDict[state].ThisPlaceForceList.Add(force);    //この軍団を大軍団に加える
-                country.AttackingForceGroupDict[state].SetAttackState(state);      //攻撃ステートを登録
-                force.SetBelongGroup(country.AttackingForceGroupDict[state]);            //軍団側に大軍団ポインタを与える
+                country.AttackingForceGroupDict[state].ThisPlaceForceList.Add(force);   //この軍団を大軍団に加える
+                country.AttackingForceGroupDict[state].SetAttackState(state);           //攻撃ステートを登録
+                force.SetBelongGroup(country.AttackingForceGroupDict[state]);           //軍団側に大軍団ポインタを与える
             }
         }
 
@@ -587,7 +590,10 @@ public class FieldManager : SingletonManager<FieldManager>
 
         //===========モデルに関する処理==========
         
-        force.LinkedUI.RefreshPositionName();       //UIの現在地を更新
+        if (country == BattleSystemManager.Instance.PlayerCountry)  //このメソッドを呼んだのがプレイヤーの場合
+        {
+            force.LinkedUI.RefreshPositionName();       //UIの現在地を更新
+        }
 
         country.RefreshBattleModelDict();       //モデル用の辞書型を更新
 
@@ -603,7 +609,7 @@ public class FieldManager : SingletonManager<FieldManager>
             }
             else
             {
-                country.GuardingForceGroupDict[beforeState].ThisPlaceForceList.Remove(force);
+                country.GuardingForceGroupDict[beforeState].ThisPlaceForceList.Remove(force);   //もとの位置の部隊を消す
             }
         }
 
@@ -619,7 +625,7 @@ public class FieldManager : SingletonManager<FieldManager>
             }
             else
             {
-                country.AttackingForceGroupDict[beforeBorder].ThisPlaceForceList.Remove(force);
+                country.AttackingForceGroupDict[beforeBorder].ThisPlaceForceList.Remove(force); //もとの位置の部隊を消す
             }
         }
 
@@ -655,8 +661,13 @@ public class FieldManager : SingletonManager<FieldManager>
     /// </summary>
     /// <param name="country"></param>
     /// <returns></returns>
-    public List<State> GetOwendStateList(CountryData country)
+    public List<State> GetOwnedStateList(CountryData country)
     {
+        if (country == null)
+        {
+            return null;
+        }
+
         List<State> states = new List<State>(); //この国家の持つ州を一旦入れるバッファ
 
         foreach (var state in m_StateList)      //州ごとに検索
@@ -670,6 +681,7 @@ public class FieldManager : SingletonManager<FieldManager>
         if (states.Count == 0)  //所有している州が無ければ
         {
             Debug.LogWarning("所有している州を発見できず");
+            DeleteCountry(country);                         //国家を削除
             return null;
         }
         else                    //所有している州があれば
@@ -679,13 +691,18 @@ public class FieldManager : SingletonManager<FieldManager>
     }
 
     /// <summary>
-    /// ステートをキー、隣接プロヴィンスデータを値とする辞書型に勢力を指定してデータを入れる
-    /// /// </summary>
-    /// <param name="dict"></param>
+    /// ワールドの全てのステートから第二引数に領有されているステートを割り出す
+    /// その後、そのステートにおける国境プロヴィンスリストを手に入れて、
+    /// ステートが持つプロヴィンスごとに国境プロヴィンスか駐屯プロヴィンスかを仕分けする。
+    /// </summary>
+    /// <param name="dict">keyのステートに対して国境から攻め入るためのプロヴィンスとそのステートを守る為のプロヴィンスのデータがそれぞれ入る</param>
     /// <param name="country"></param>
     public void SearchNeighborStateForDict(Dictionary<State, List<ClickableProvinceData>> dict, CountryData country)
     {
         dict.Clear();   //一旦クリア
+
+        var disableList = country.AttackDisableStateList;
+        disableList.Clear();
 
         //国境の種類を列挙
         var borderProvinceList = new List<Province>();
@@ -712,16 +729,12 @@ public class FieldManager : SingletonManager<FieldManager>
                     {
                         foreach (var nState in prov.NeighberStateList)  //そのプロヴィンスが隣接しているステートの数分、回す(複数のステートと隣接している場合にしっかりとUIとデータに反映するため)
                         {
-                            /*if (!state.OwnedCountry.EnemyCountryList.Contains(nState.state.OwnedCountry) || nState.state.OwnedCountry != null)  //敵対している勢力と空ステート以外は無視
-                            {
-                                continue;
-                            }*/
-
                             if (nState.state.OwnedCountry != null)  //そのステートはどこかの勢力に領有されている
                             {
                                 if (!state.OwnedCountry.EnemyCountryList.Contains(nState.state.OwnedCountry))   //かつ、その隣接しているステートの勢力と現在のステートの勢力が戦争状態に無い
                                 {
-                                    continue;   //戦争状態じゃない勢力には攻め込めないため、無視
+                                    disableList.Add(nState.state);  //
+                                    continue;                       //戦争状態じゃない勢力には攻め込めないため、無視
                                 }
                             }
 
@@ -756,30 +769,67 @@ public class FieldManager : SingletonManager<FieldManager>
     /// </summary>
     /// <param name="borders"></param>
     /// <param name="guarrison"></param>
-    public void GetSettableBorderAndStateList(List<State> borders, List<State> guarrison, Dictionary<State, List<ClickableProvinceData>> neighborDict)
+    public void GetSettableBorderAndStateList(CountryData country, Dictionary<State, List<ClickableProvinceData>> relateStateDict)
     {
+        var borders = country.BorderStateList;
+        var guarrison = country.GuarrisonStateList;
+
         borders.Clear();
         guarrison.Clear();
 
-        //====================フィールドマネージャからデータを取得===================
-        foreach (var state in neighborDict.Keys)
+        foreach (var state in relateStateDict.Keys)    //関連しているステートの中から
         {
-            if (GetPlayerFromCountry(state.OwnedCountry) != null)
+            if (state.OwnedCountry == country)  //自国のステートは駐屯地として
             {
-                if (!GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //他ステートをターゲットとする場合
-                {
-                    borders.Add(state);
-                }
-                else                                            //自分が保有するステートをターゲットとする場合
-                {
-                    guarrison.Add(state);
-                }
+                guarrison.Add(state);
             }
-            else                                            //自分が保有するステート以外をターゲットとする場合
+            else                                //それ以外は国境として登録する
             {
                 borders.Add(state);
             }
         }
-        //====================フィールドマネージャからデータを取得End===================
+    }
+
+    /// <summary>
+    /// 隣接ステートから隣接している勢力を割り出してリスト化する
+    /// </summary>
+    /// <param name="states"></param>
+    /// <returns></returns>
+    public List<CountryData> GetNeighborCountryList(List<State> states, CountryData owner)
+    {
+        var countryList = new List<CountryData>();
+
+        foreach (var state in states.ToArray())
+        {
+            if (!countryList.Contains(state.OwnedCountry) && owner != state.OwnedCountry)   //隣の勢力リストに含まれて無くて、自分自身じゃなければ
+            {
+                countryList.Add(state.OwnedCountry);
+            }
+        }
+
+        if (countryList.Count == 0) //無ければ
+        {
+            Debug.Log("隣国はありません");
+            return countryList;
+        }
+        else
+        {
+            Debug.Log("隣国は" + countryList.Count + "個あります");
+            return countryList;
+        }
+    }
+
+    /// <summary>
+    /// この勢力を削除する
+    /// </summary>
+    public void DeleteCountry(CountryData country)
+    {
+        foreach (var count in CountryList)
+        {
+            count.AlliesCountryList.Remove(country);            //同盟リストから削除
+            count.EnemyCountryList.Remove(country);             //敵対リストから削除
+        }
+        CountryList.Remove(country);                            //マネージャから国家を削除
+        CountryDictPlayerKey.Remove(country.OwnedPlayerData);   //プレイヤーから検索できる辞書型も削除
     }
 }

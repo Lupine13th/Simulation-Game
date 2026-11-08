@@ -31,12 +31,7 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     /// <summary>
     /// 軍団UIの辞書型
     /// </summary>
-    private Dictionary<ForceGroup, WorldSpaceUI_Force> m_ForceUIDict= new Dictionary<ForceGroup, WorldSpaceUI_Force>();
-
-    /// <summary>
-    /// ステート上のアイコンの辞書型
-    /// </summary>
-    private Dictionary<State, SpriteRenderer> m_StateIconDict= new Dictionary<State, SpriteRenderer>();
+    public Dictionary<ForceGroup, WorldSpaceUI_Force> ForceUIDict { get; private set; } = new Dictionary<ForceGroup, WorldSpaceUI_Force>();
 
     private Camera m_MainCamera;
 
@@ -111,11 +106,11 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
 
         //==================軍団UI更新====================
 
-        if (m_ForceUIDict.Count > 0)
+        if (ForceUIDict.Count > 0)
         {
             List<WorldSpaceUI_Force> garbageList = new List<WorldSpaceUI_Force>();  //ほんとは破棄されるべきUI
 
-            foreach (var ui in m_ForceUIDict.Values)
+            foreach (var ui in ForceUIDict.Values)
             {
                 if (ui.ForceObject == null) //もし連携しているオブジェクトが空ならば
                 {
@@ -154,7 +149,7 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     public void InstantiateForceUI(ForceGroup force, GameObject model)
     {
         WorldSpaceUI_Force ui = Instantiate(m_ForceUIPrefab, m_ForceUIParent);  //UI生成
-        m_ForceUIDict[force] = ui;                                              //辞書型に追加
+        ForceUIDict[force] = ui;                                              //辞書型に追加
 
         ui.SetDatas(force, model);  //データをセット
 
@@ -167,10 +162,10 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     /// <param name="force">その軍団のデータ</param>
     public void RemoveForceUI(ForceGroup force)
     {
-        if (m_ForceUIDict.ContainsKey(force))
+        if (ForceUIDict.ContainsKey(force))
         {
-            Destroy(m_ForceUIDict[force].gameObject);
-            m_ForceUIDict.Remove(force);
+            Destroy(ForceUIDict[force].gameObject);
+            ForceUIDict.Remove(force);
         }
     }
 
@@ -214,13 +209,15 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     /// </summary>
     public void UpdateForceUI()
     {
-        foreach (var force in m_ForceUIDict)
+        foreach (var force in ForceUIDict)
         {
             var headForce = force.Key.GetListHead();
 
+            force.Key.UpdateDatas();
+
             force.Value.FlagImage.sprite = headForce.OwnerCountry.CountryFlag;  //国旗データ入力
             force.Value.ForceNameText.SetText(headForce.ForcesName);            //軍団の名前を入力
-            force.Value.SoldiersText.SetText(force.Key.UpdateDatas().ToString());    //軍団の兵数を入力
+            force.Value.SoldiersText.SetText(force.Key.AllSoldier.ToString());    //軍団の兵数を入力
             force.Value.AttackText.SetText(headForce.AttackPower.ToString());   //軍団の攻撃力を入力
             force.Value.DefenceText.SetText(headForce.DefensePower.ToString()); //軍団の防御力を入力
 

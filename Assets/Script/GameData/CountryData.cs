@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -110,14 +111,19 @@ public class CountryData
     public List<CountryData> AlliesCountryList { get; private set; } = new List<CountryData>();
 
     /// <summary>
-    /// 部隊を配置可能な国境のリスト(プレイヤーが使用)
+    /// 攻撃部隊を配置可能なリスト(プレイヤーが使用)
     /// </summary>
     public List<State> BorderStateList { get; private set; } = new List<State>();
 
     /// <summary>
-    /// 部隊を配置可能なステートのリスト
+    /// 防御部隊を配置可能なステートのリスト
     /// </summary>
     public List<State> GuarrisonStateList { get; private set; } = new List<State>();
+
+    /// <summary>
+    /// 攻撃不可能なステートのリスト
+    /// </summary>
+    public List<State> AttackDisableStateList { get; private set; } = new List<State>();
 
     /// <summary>
     /// 国境ごとの戦闘モデル用辞書型
@@ -125,9 +131,10 @@ public class CountryData
     public Dictionary<State, GameObject> BattleModelDict { get; private set; } = new Dictionary<State, GameObject>();
 
     /// <summary>
-    /// key:ターゲットとするステート value:そのステートに隣接しているプロヴィンスのリスト
+    /// 関係する周辺のステートの情報が入っている辞書型
+    /// key:ターゲットとするステート value:そのステートを攻撃する国境プロヴィンスorそのステートの防衛を行う駐屯プロヴィンスのデータ
     /// </summary>
-    public Dictionary<State, List<ClickableProvinceData>> NeighborStateDict { get; private set; } = new Dictionary<State, List<ClickableProvinceData>>();
+    public Dictionary<State, List<ClickableProvinceData>> RelateStateDict { get; private set; } = new Dictionary<State, List<ClickableProvinceData>>();
 
     /// <summary>
     /// この国家のプレイヤー
@@ -274,13 +281,13 @@ public class CountryData
         if (OwnedPlayerData.IsPlayer)   //プレイヤーの時だけ
         {
             SetInventryUI();    //所持リソースUI更新
-        }
 
-        BattleSystemManager.Instance.GetMenuDict()[MenuType.Forces].GetComponent<ForcesMenu>().UpdateForceUI(this); //プレイヤーの軍団メニューを更新
+            BattleSystemManager.Instance.GetMenuDict()[MenuType.Forces].GetComponent<ForcesMenu>().UpdateForceUI(this); //プレイヤーの軍団メニューを更新
+        }
 
         manager.SetForceOnState(manager.StateList[CapitalStateID], force);  //首都に駐屯部隊として出す
 
-        Debug.Log("徴兵完了:  兵種:" + data.ForceType + "  兵数:" + data.Soldiers + "  使用資金(残り):" + data.FundCost * data.Soldiers + "(" + Fund + ")" +"  使用資源(残り):" + data.ResourceCost * data.Soldiers + "(" + Resource + ")");
+        //Debug.Log("徴兵完了:  兵種:" + data.ForceType + "  兵数:" + data.Soldiers + "  使用資金(残り):" + data.FundCost * data.Soldiers + "(" + Fund + ")" +"  使用資源(残り):" + data.ResourceCost * data.Soldiers + "(" + Resource + ")");
     }
 
     /// <summary>
@@ -293,6 +300,8 @@ public class CountryData
         {
             return; //無視
         }
+
+        Debug.Log(CountryName + "が" + enemydata.CountryName + "に対して宣戦布告");
 
         EnemyCountryList.Add(enemydata);        //この勢力の「戦争中の勢力リスト」に対象の勢力を加える
         enemydata.EnemyCountryList.Add(this);   //対象の勢力の「戦争中の勢力リスト」にこの勢力を加える
@@ -343,14 +352,14 @@ public class CountryData
 
         int currentAllSoldiers = 0;                         //現在の勢力の総兵数
 
-        foreach (var force in AttackingForceGroupDict.Values)
+        foreach (var force in AttackingForceGroupDict.Values.ToArray())
         {
             currentAllSoldiers += force.AllSoldier;           //軍団ごとの値を入力
 
             if (force.AttackingState != null)           //現在侵略中のステートがあれば
             {
                 force.GetListHead().Conquest();                //先頭の軍団に侵略を行わせる
-            }                              
+            }
         }
 
         AllSoldiers = currentAllSoldiers;                   //国家の全兵力のステータスに更新
@@ -365,7 +374,7 @@ public class CountryData
     {
         //====================「リソース」に関する情報の更新===================
 
-        var stateList = FieldManager.Instance.GetOwendStateList(this);    //所有している州を取得
+        var stateList = FieldManager.Instance.GetOwnedStateList(this);    //所有している州を取得
 
         foreach (var state in stateList)
         {
@@ -525,6 +534,31 @@ public class CountryData
         var randomindex = Random.Range(0, freeForceList.Count); //インデックス内で乱数を取る
 
         return freeForceList[randomindex];
+    }
+
+    /// <summary>
+    /// とあるステートを攻撃中の大軍団が所属しているステートをリスト化して返す
+    /// </summary>
+    /// <param name="targetState"></param>
+    /// <returns></returns>
+    public List<State> GetForceGroupAttackingBase(State targetState)
+    {
+        if (targetState == null)
+        {
+            return null;
+        }
+
+        var attackingBaseList = new List<State>();  //この勢力がtargetStateに攻撃を行うラインがあるステートのリスト
+
+        foreach (var prov in RelateStateDict[targetState])
+        {
+            if (!attackingBaseList.Contains(prov.proviince.OwnedState)) //まだリストにはいっていない
+            {
+                attackingBaseList.Add(prov.proviince.OwnedState);       //リストに追加
+            }
+        }
+
+        return attackingBaseList;   //返す
     }
 }
 
