@@ -20896,7 +20896,7 @@ PrefabInstance:
       objectReference: {fileID: 1310085120}
     - target: {fileID: 5457979234955667955, guid: 40321499fb981dc48925b33e4cac63cf, type: 3}
       propertyPath: m_StateCount
-      value: 10
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5457979234955667955, guid: 40321499fb981dc48925b33e4cac63cf, type: 3}
       propertyPath: m_StatePrefab

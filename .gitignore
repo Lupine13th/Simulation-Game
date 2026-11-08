@@ -6,3 +6,4 @@ Temp/
 Logs/
 *.log
 *.dwlt
+obj/

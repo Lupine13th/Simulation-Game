@@ -81,7 +81,6 @@ public class State : MonoBehaviour
     public GameObject GuarrisonModel { get; private set; }
     
     public Dictionary<State, List<Province>> BorderProvDict { get; private set; } = new Dictionary<State, List<Province>>();
-    public Dictionary<CountryData, List<Force>> GuarrisonDict {  get; private set; } = new Dictionary<CountryData, List<Force>>();
 
     /// <summary>
     /// このステートに存在する建物リスト
@@ -257,14 +256,6 @@ public class State : MonoBehaviour
         return isBorder;
     }*/
 
-    private void Update()
-    {
-        if (IsIconAnimation)
-        {
-
-        }
-    }
-
     public void SetStateColor(Vector3 color)
     {
         foreach (var prov in m_ProvinceList)
@@ -388,29 +379,11 @@ public class State : MonoBehaviour
     }
 
     /// <summary>
-    /// ステートの駐屯軍を配置
-    /// </summary>
-    public void AddGuarrisonForce(Force force)
-    {
-        CountryData country = force.OwnerCountry; //どの国所属か
-
-        if (GuarrisonDict.ContainsKey(country))
-        {
-            GuarrisonDict[country].Add(force);
-        }
-        else
-        {
-            GuarrisonDict.Add(country, new List<Force>());
-            GuarrisonDict[country].Add(force);
-        }
-    }
-
-    /// <summary>
     /// 占領中
     /// </summary>
     /// <param name="value"></param>
     /// <param name="occupyingCountry"></param>
-    public void Occupied(int value, CountryData occupyingCountry)
+    public void Occupied(int value, CountryData occupyingCountry, ForceGroup forceGroup)
     {
         if (!m_StateIcon.activeSelf)
         {
@@ -430,9 +403,12 @@ public class State : MonoBehaviour
 
         if (OccupiedValue > MaxOccupiedValue)   //最大占領よりも占領が大きい場合、ステートの支配権が移る
         {
+            FieldManager.Instance.GetOwnedStateList(OwnedCountry);  //占領されていた勢力が全ステートを失えば勢力ごと削除
             OccupiedCountry = null;
             OccupiedValue = 0;
-            SetOwner(occupyingCountry);          //支配権を移行
+            SetOwner(occupyingCountry);     //支配権を移行
+            m_StateIcon.SetActive(false);   //占領されているアイコンをオフ
+            forceGroup.EndOccupy(this);     //占領を終了する
         }
     }
 

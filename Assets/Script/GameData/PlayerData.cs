@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public enum AITendency
@@ -14,6 +15,7 @@ public enum AIActionType
     None,
     Build,
     Attack,
+    Occupy,
     Guarrison,
     DeclareWar,
     FormAlliance,
@@ -43,6 +45,7 @@ public class PlayerData : MonoBehaviour
     {
         { AIActionType.Build, 0f },
         { AIActionType.Attack, 0f },
+        { AIActionType.Occupy, 0f },
         { AIActionType.Guarrison, 0f },
         { AIActionType.DeclareWar, 0f },
         { AIActionType.FormAlliance, 0f },
@@ -58,15 +61,69 @@ public class PlayerData : MonoBehaviour
     /// </summary>
     public void UpdateAIThinkingOnDefencive()
     {
+        var fieldManager = FieldManager.Instance;
+
         ClearActionValueDict();     //行動を決める辞書の中身をクリアする
 
         //---------行動評価フェーズ----------
 
-        var stateDict = CountryData.NeighborStateDict;  //隣接ステートの辞書型
+        var nStateDict = CountryData.RelateStateDict;  //隣接ステートの辞書型
 
-        FieldManager.Instance.GetBorderAndStateData(CountryData);
+        fieldManager.SearchNeighborStateForDict(nStateDict, CountryData);   //隣接ステートの情報を得る
 
-        FieldManager.Instance.SearchNeighborStateForDict(stateDict, CountryData);   //隣接ステートの情報を得る
+        State bestAttackState = null;   //最も攻撃が有効なステート
+        int bestAttackStateValue = 0;
+        State bestGuardState = null;    //最も防衛が有効なステート
+        int bestGuardStateValue = 0;
+
+        foreach (var state in FieldManager.Instance.StateList)
+        {
+            if (nStateDict.ContainsKey(state))  //隣接ステートの攻撃評価点
+            {
+                int value = 0;
+
+                if (state.OwnedCountry == CountryData)
+                {
+                    continue;
+                }
+
+                if (state.OwnedCountry == null)     //まず、空ステートならば
+                {
+                    value = 500;   //500点からスタート
+                }
+
+                int stateValue = (state.Income + state.Resource) / 10;  //ステート自身の評価
+
+                value += stateValue;   //加点
+
+                if (bestAttackStateValue < value)
+                {
+                    bestAttackState = state;  //有効なステートを更新
+                    bestAttackStateValue = value;
+                }
+            }
+            else if (state.OwnedCountry == CountryData) //自勢力ステートの防衛評価点
+            {
+                int value = 0;
+
+                if (!CountryData.GuardingForceGroupDict.ContainsKey(state))     //まず、ステートに駐屯軍団がいないならば
+                {
+                    value = 400;   //400点からスタート
+                }
+
+                int stateValue = (state.Income + state.Resource) / 10;  //ステート自身の評価
+
+                value += stateValue;   //加点
+
+                if (bestGuardStateValue < value)
+                {
+                    bestGuardState = state;  //有効なステートを更新
+                    bestGuardStateValue = value;
+                }
+            }
+        }
+
+        fieldManager.GetBorderAndStateData(CountryData);
 
         if (CountryData.EnemyCountryList.Count > 0) //どこかの勢力と戦争中である
         {
@@ -86,15 +143,41 @@ public class PlayerData : MonoBehaviour
             ActionValueDict[AIActionType.Enlist] -= 100;
         }
 
-        if (stateDict.Count >= CountryData.ForceList.Count) //国境の数よりも軍団が少ない場合
+        if (nStateDict.Count >= CountryData.ForceList.Count) //国境の数よりも軍団が少ない場合
         {
             ActionValueDict[AIActionType.Enlist] += 200;    //200点追加
         }
         else                                                //軍団数が足りている場合
         {
-            ActionValueDict[AIActionType.Attack] += 100;    //100点追加
-        }
+            if (bestAttackState == null)
+            {
+                ActionValueDict[AIActionType.Enlist] += 50;
+                ActionValueDict[AIActionType.DeclareWar] += 100;
+            }
+            else if (bestAttackState.OwnedCountry != null)    //最も評価の高いステートがどこかの勢力に属している
+            {
+                if (CountryData.EnemyCountryList.Contains(bestAttackState.OwnedCountry))  //最も評価の高いステートが自勢力の敵対勢力の場合
+                {
+                    ActionValueDict[AIActionType.Attack] += 200;    //評価高め
+                }
+                else
+                {
+                    if (CountryData.EnemyCountryList.Count == 0 && !CountryData.EnemyCountryList.Contains(bestAttackState.OwnedCountry))    //どことも戦争中でない
+                    {
+                        ActionValueDict[AIActionType.DeclareWar] += 50;    //50点追加(周りのステートを占領しきったら多分ここが最大点になるはず)
+                    }
+                }
+            }
+            else　   //最も評価の高いステートがどこかの勢力に属していない
+            {
+                ActionValueDict[AIActionType.Occupy] += 100;    //100点追加
+            }
 
+            if (bestAttackStateValue < bestGuardStateValue) //防御評価点の方が高ければ
+            {
+                ActionValueDict[AIActionType.Guarrison] += (ActionValueDict[AIActionType.Attack] + 50);
+            }
+        }
 
         //---------行動評価フェーズEnd----------
 
@@ -118,37 +201,39 @@ public class PlayerData : MonoBehaviour
                 }
                 break;
             case AIActionType.Attack:   //最も有効な行動が「攻撃」ならば
-
-                State bestState = null;        //最も攻撃が有効なステート
-                int bestValue = 0;
-                
-                foreach (var state in stateDict.Keys)
                 {
-                    int value = 0;
+                    var randForce = CountryData.GetRandomFreeForce();   //ランダムな軍団を選択
 
-                    if (state.OwnedCountry == null)     //まず、空ステートならば
+                    if (randForce != null)
                     {
-                        value = 500;   //200点からスタート
+                        fieldManager.SetForceOnBorder(bestAttackState, randForce);   //選択したステートに軍団を割り当て
                     }
 
-                    int stateValue = (state.Income + state.Resource) / 10;  //ステート自身の評価
+                    break;
+                }
 
-                    value += stateValue;   //加点
+            case AIActionType.Occupy:   //最も有効な行動が「攻撃」ならば
+                { 
+                    var randForce = CountryData.GetRandomFreeForce();   //ランダムな軍団を選択
 
-                    if (bestValue < value)
+                    if (randForce != null)
                     {
-                        bestState = state;  //有効なステートを更新
-                        bestValue = value;
+                        fieldManager.SetForceOnBorder(bestAttackState, randForce);   //選択したステートに軍団を割り当て
                     }
+
+                    break;
                 }
+            case AIActionType.DeclareWar:   //最も有効な行動が「宣戦布告」ならば
 
-                var randForce = CountryData.GetRandomFreeForce();   //ランダムな軍団を選択
+                var neighborList = fieldManager.GetNeighborCountryList(CountryData.AttackDisableStateList, CountryData);  //隣の全勢力
 
-                if (randForce != null)
-                {
-                    FieldManager.Instance.SetForceOnBorder(bestState, randForce);   //選択したステートに軍団を割り当て
-                }
+                if (neighborList.Count == 0) { break; }
 
+                CountryData.DeclareWar(neighborList[Random.Range(0, neighborList.Count)]);                  //隣の勢力にランダムで宣戦布告を行う
+
+                break;
+            default:
+                Debug.Log(CountryData.CountryName + "は何もしなかった");
                 break;
         }
 
