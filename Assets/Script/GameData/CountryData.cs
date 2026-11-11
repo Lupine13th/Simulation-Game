@@ -41,6 +41,21 @@ public class CountryData
     public int Resource {  get; private set; } = 5000;
 
     /// <summary>
+    /// 合計死傷者数
+    /// </summary>
+    public int DeathCount { get; private set; }
+
+    /// <summary>
+    /// 取得したステート数
+    /// </summary>
+    public int StateGetCount { get; private set; }
+
+    /// <summary>
+    /// 倒した勢力の数
+    /// </summary>
+    public int CountryKillCount { get; private set; }
+
+    /// <summary>
     /// 大枠のイデオロギー
     /// </summary>
     public LIdeology LargeIdeology { get; private set; }
@@ -375,6 +390,11 @@ public class CountryData
         //====================「リソース」に関する情報の更新===================
 
         var stateList = FieldManager.Instance.GetOwnedStateList(this);    //所有している州を取得
+
+        if (stateList == null)
+        {
+            return;
+        }
 
         foreach (var state in stateList)
         {

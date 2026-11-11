@@ -155,6 +155,8 @@ public class FieldManager : SingletonManager<FieldManager>
 
     public bool IsPlaying { get; private set; } = false;
 
+    public TextMeshProUGUI TimeText => m_TimeText;
+
     async void Start()
     {
         m_TimeText.SetText(FieldTime[TimeType.Hour].ToString() + ". " + FieldTime[TimeType.Day].ToString() + ". " + FieldTime[TimeType.Month].ToString() + ". " + FieldTime[TimeType.Year].ToString());
@@ -365,7 +367,7 @@ public class FieldManager : SingletonManager<FieldManager>
 
         FieldTime[TimeType.Hour]++;         //1時間更新
 
-        foreach (var country in CountryList)
+        foreach (var country in CountryList.ToArray())
         {
             country.UpdateCountryDataOnHour();    //国家ごとの情報更新(時毎)
 
@@ -682,6 +684,10 @@ public class FieldManager : SingletonManager<FieldManager>
         {
             Debug.LogWarning("所有している州を発見できず");
             DeleteCountry(country);                         //国家を削除
+            if (CheckPlayerIsDead())    //もしプレイヤー国家が無ければ
+            {
+                BattleSystemManager.Instance.GameOver(false);
+            }
             return null;
         }
         else                    //所有している州があれば
@@ -831,5 +837,21 @@ public class FieldManager : SingletonManager<FieldManager>
         }
         CountryList.Remove(country);                            //マネージャから国家を削除
         CountryDictPlayerKey.Remove(country.OwnedPlayerData);   //プレイヤーから検索できる辞書型も削除
+    }
+
+    /// <summary>
+    /// プレイヤー勢力がまだ残っているかを確認する trueで残っていない
+    /// </summary>
+    public bool CheckPlayerIsDead()
+    {
+        foreach (var country in CountryDictPlayerKey.Keys)
+        {
+            if (country.IsPlayer)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

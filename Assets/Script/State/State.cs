@@ -311,7 +311,12 @@ public class State : MonoBehaviour
 
     public void SetOwner(CountryData country)
     {
-        OwnedCountry = country;
+        var lateCountry = OwnedCountry; //過去に所有されていた勢力
+
+        OwnedCountry = country;         //所有勢力を切り替え
+
+        FieldManager.Instance.GetOwnedStateList(lateCountry);  //占領されていた勢力が全ステートを失えば勢力ごと削除
+
         SetStateColor(OwnedCountry.CountryColor);
     }
 
@@ -403,7 +408,6 @@ public class State : MonoBehaviour
 
         if (OccupiedValue > MaxOccupiedValue)   //最大占領よりも占領が大きい場合、ステートの支配権が移る
         {
-            FieldManager.Instance.GetOwnedStateList(OwnedCountry);  //占領されていた勢力が全ステートを失えば勢力ごと削除
             OccupiedCountry = null;
             OccupiedValue = 0;
             SetOwner(occupyingCountry);     //支配権を移行

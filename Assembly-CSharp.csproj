@@ -63,25 +63,33 @@
   <ItemGroup>
     <Compile Include="Assets\Script\InGameUI\BuildingMenu.cs" />
     <Compile Include="Assets\Script\InGameUI\InventryUI.cs" />
+    <Compile Include="Assets\UniGif\UniGifConst.cs" />
     <Compile Include="Assets\Script\State\Province.cs" />
     <Compile Include="Assets\Script\InGameUI\DiplomacyMenu.cs" />
+    <Compile Include="Assets\UniGif\Example\Script\Utility\UniGifImageAspectController.cs" />
     <Compile Include="Assets\Script\Manager\BattleSystemManager.cs" />
     <Compile Include="Assets\Script\InGameUI\OrderMenu.cs" />
     <Compile Include="Assets\Script\InGameUI\CountryMenu.cs" />
     <Compile Include="Assets\Script\InGameUI\CountryButton.cs" />
+    <Compile Include="Assets\UniGif\UniGifExtension.cs" />
     <Compile Include="Assets\Script\GameData\PlayerData.cs" />
+    <Compile Include="Assets\Script\InGameUI\ResultUI.cs" />
     <Compile Include="Assets\Script\InGameUI\WorldSpaceUI_Force.cs" />
     <Compile Include="Assets\Script\InGameUI\ForceDataUI.cs" />
     <Compile Include="Assets\Script\InGameUI\StateMenu.cs" />
     <Compile Include="Assets\Script\InGameUI\BuildingButton.cs" />
+    <Compile Include="Assets\UniGif\UniGifDecoder.cs" />
     <Compile Include="Assets\Script\Manager\FieldManager.cs" />
     <Compile Include="Assets\Script\Custom\CustomButton.cs" />
     <Compile Include="Assets\Script\State\State.cs" />
     <Compile Include="Assets\Script\InGameUI\ForcesMenu.cs" />
+    <Compile Include="Assets\UniGif\Example\Script\UniGifImage.cs" />
     <Compile Include="Assets\Script\Force\Force.cs" />
     <Compile Include="Assets\Script\InGameUI\WorldSpaceUI_State.cs" />
     <Compile Include="Assets\Script\InGameUI\TimeCounterUI.cs" />
     <Compile Include="Assets\Script\InGameUI\FlagAndNameUI.cs" />
+    <Compile Include="Assets\UniGif\UniGif.cs" />
+    <Compile Include="Assets\UniGif\Example\Script\UniGifTest.cs" />
     <Compile Include="Assets\Script\GameData\CountryData.cs" />
     <Compile Include="Assets\Script\InGameUI\BuildingUI.cs" />
     <Compile Include="Assets\Script\InGameUI\OrderMenuStateInfo.cs" />
@@ -92,6 +100,7 @@
     <Compile Include="Assets\Script\Manager\SingletonManager.cs" />
     <Compile Include="Assets\Script\InGameUI\OrderUI.cs" />
     <Compile Include="Assets\Script\Manager\ModelManager.cs" />
+    <Compile Include="Assets\UniGif\UniGifFormatter.cs" />
     <Compile Include="Assets\Script\InGameUI\TacticalMenu.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -50,6 +50,9 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
 
     [SerializeField] private InventryUI m_InventryUI;
 
+    [Header("")]
+    [SerializeField] private ResultUI m_ResultUI;
+
     private Dictionary<Direction, float>  m_CameraMoveSpeed = new Dictionary<Direction, float>()
     {
         { Direction.North, 0.0f },
@@ -687,18 +690,6 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     {
         EnlistData data = EnlistDataDict[type];
 
-        /*m_SelectingType = data.ForceType;
-        m_MaxSoldierValue = data.MaxSoldiers;
-        m_MaxMoraleValue = data.MaxMorales;
-        m_AttackValue = data.Attack;
-        m_DefenseValue = data.Defence;
-        m_OccupyValue = data.Occupy;
-        m_MoveSpeed = data.MoveSpeed;
-        m_FundCostValue = data.FundCost;
-        m_ResourceCostValue = data.ResourceCost;
-
-        m_SoldierValue = 0;*/
-
         ForceData force = new ForceData();
 
         force.ForceType = type;                     //兵種
@@ -765,6 +756,30 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         }
 
         return favorValue;
+    }
+
+    /// <summary>
+    /// ゲーム終了時に呼ぶメソッド
+    /// </summary>
+    public void GameOver(bool win)
+    {
+        FieldManager.Instance.StopTimeCount();  //シミュレーション終了
+        m_TimeCounter.ChangeTimeImage(false);   //一応、UIも変更
+
+        var player = PlayerCountry;
+
+        /*if (win)    //勝利時の処理
+        {
+            
+        }
+        else        //敗北時の処理
+        {
+
+        }*/
+
+        m_ResultUI.gameObject.SetActive(true);  //リザルト画面を表示
+
+        m_ResultUI.SetTextAndFlag(player.CountryFlag, player.StateGetCount, player.CountryKillCount, player.DeathCount, FieldManager.Instance.TimeText.text);   //
     }
 }
 
