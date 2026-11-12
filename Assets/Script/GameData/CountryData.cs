@@ -320,6 +320,8 @@ public class CountryData
 
         EnemyCountryList.Add(enemydata);        //この勢力の「戦争中の勢力リスト」に対象の勢力を加える
         enemydata.EnemyCountryList.Add(this);   //対象の勢力の「戦争中の勢力リスト」にこの勢力を加える
+
+        NotificationManager.Instance.InstanciateDeclareWarNotice(this, enemydata);  //宣戦布告通知を生成
     }
 
     /// <summary>

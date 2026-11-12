@@ -686,9 +686,13 @@ public class FieldManager : SingletonManager<FieldManager>
             DeleteCountry(country);                         //国家を削除
             if (CheckPlayerIsDead())    //もしプレイヤー国家が無ければ
             {
-                BattleSystemManager.Instance.GameOver(false);
+                BattleSystemManager.Instance.GameOver(false);   //プレイヤー敗北時演出
             }
-            return null;
+            else if (CheckPlayerIsOnlyAlive())
+            {
+                BattleSystemManager.Instance.GameOver(true);    //プレイヤー勝利時演出
+            }
+                return null;
         }
         else                    //所有している州があれば
         {
@@ -847,6 +851,22 @@ public class FieldManager : SingletonManager<FieldManager>
         foreach (var country in CountryDictPlayerKey.Keys)
         {
             if (country.IsPlayer)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// フィールドにいるのがプレイヤーのみかを確認　trueでプレイヤーのみ
+    /// </summary>
+    public bool CheckPlayerIsOnlyAlive()
+    {
+        foreach (var country in CountryDictPlayerKey.Keys)
+        {
+            if (!country.IsPlayer)
             {
                 return false;
             }
