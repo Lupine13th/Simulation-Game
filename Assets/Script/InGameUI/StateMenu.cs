@@ -26,6 +26,8 @@ public class StateMenu : TacticalMenu
     public override void Init()
     {
         SetStateData(BattleSystemManager.Instance.SelectingState);
+        BattleSystemManager.Instance.ResetOwnedAllStateColor(BattleSystemManager.Instance.SelectingCountry);                        //ステート色を一旦リセット
+        BattleSystemManager.Instance.SelectingState.SetStateColor(FieldManager.Instance.StateColorDict[StateColorType.Selecting]);  //選択ステートのみ色変更
     }
 
     public async Task SetStateData(State state)

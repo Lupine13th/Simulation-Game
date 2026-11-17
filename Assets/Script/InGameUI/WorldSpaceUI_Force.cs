@@ -10,6 +10,9 @@ public class WorldSpaceUI_Force : MonoBehaviour
     [Header("UI背景")]
     [SerializeField] private Image m_BackGround;
 
+    [Header("矢印マーク")]
+    [SerializeField] private GameObject m_ArrowMark;
+
     [Header("軍団名")]
     [SerializeField] private TextMeshProUGUI m_ForceNameText;
 
@@ -21,6 +24,12 @@ public class WorldSpaceUI_Force : MonoBehaviour
 
     [Header("防御力")]
     [SerializeField] private TextMeshProUGUI m_DefenceText;
+
+    [Header("勝敗判定")]
+    [SerializeField] private TextMeshProUGUI m_ResultText;
+
+    [Header("勝敗判定テキストの親")]
+    [SerializeField] private Animator m_ResultTextAnim;
 
     [SerializeField] public int ID;    //デバッグ用　識別番号
 
@@ -53,5 +62,36 @@ public class WorldSpaceUI_Force : MonoBehaviour
     {
         ForceData = forcedata;
         ForceObject = forceobject;
+    }
+
+    public void SetResultText(BattleResult result)
+    {
+        m_ResultText.gameObject.SetActive(true);//テキストをオン
+        m_ResultTextAnim.Play("ResultText");    //アニメーション開始
+
+        switch (result)
+        {
+            case BattleResult.Win:
+                m_ResultText.SetText("WIN!");
+                m_ResultText.color = Color.gold;
+                break;
+            case BattleResult.Lose:
+                m_ResultText.SetText("LOSE!");
+                m_ResultText.color = Color.purple;
+                break;
+            case BattleResult.Draw:
+                m_ResultText.SetText("DRAW");
+                m_ResultText.color = Color.white;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 矢印マークをオンオフ
+    /// </summary>
+    /// <param name="on"></param>
+    public void SetActiveArrowMark(bool on)
+    {
+        m_ArrowMark.SetActive(on);
     }
 }

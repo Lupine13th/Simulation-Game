@@ -79,8 +79,15 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
 
     public Dictionary<MenuType, TacticalMenu> MenuDict { get; private set; } = new Dictionary<MenuType, TacticalMenu>();
 
+    /// <summary>
+    /// 部隊の指揮官の画像データリスト
+    /// </summary>
+    public List<Sprite> CommanderPortraitList { get; private set; } = new List<Sprite>();
+
     private const float kOpenLabelPositionX = -185.0f; //付箋を少し出す位置
     private const float kCloseLabelPositionX = -269.0f; //付箋の元の位置
+
+    private const string kCommanderPortraitFolderPath = "Assets/Texture/Portrait/Commander";
 
     /// <summary>
     /// ポインタがUIに触れていて、別の処理でその影響をかき消させないようにするフラグ
@@ -102,6 +109,16 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         string statusCsv = await addressable.LoadCsvTextAsync(addressable.MasterAddress[MasterData.ForceStatus]);   //マスターデータから情報取得
 
         addressable.ParseCsvStatusData(statusCsv, EnlistDataDict);  //データ分解後、EnlistDataListに入れる
+
+        //----------指揮官の画像を読み取り----------
+
+        int maxIndex = AddressableManager.Instance.GetTextureCount(kCommanderPortraitFolderPath);
+
+        for (int i = 0; i < maxIndex; i++)
+        {
+            string leaderId = "Commander" + i;
+            CommanderPortraitList.Add(await AddressableManager.Instance.LoadSpriteAsync(leaderId));
+        }
 
         FieldManager.Instance.StopTimeCount();
         m_TimeCounter.ChangeTimeImage(false);
@@ -252,14 +269,20 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
             case CamaraState.TopDown:
                 cameraRotation = Quaternion.Euler(90.0f, 0.0f, 0.0f);
                 m_MainCamera.transform.SetPositionAndRotation(new Vector3(0.0f, 50.0f, 0.0f), cameraRotation);  //直上からの見下ろし位置へカメラを移動
+                WorldUIManager.Instance.ForceUIParent.gameObject.SetActive(false);
+                WorldUIManager.Instance.StateUIParent.gameObject.SetActive(true);
                 break;
             case CamaraState.Tactical:
                 cameraRotation = Quaternion.Euler(60.0f, 0.0f, 0.0f);
                 m_MainCamera.transform.SetPositionAndRotation(new Vector3(0.0f, 20.0f, -20.0f), cameraRotation);//斜め上からの戦術カメラに移動
+                WorldUIManager.Instance.ForceUIParent.gameObject.SetActive(true);
+                WorldUIManager.Instance.StateUIParent.gameObject.SetActive(true);
                 break;
             case CamaraState.Dramatic:
                 cameraRotation = Quaternion.Euler(15.0f, 0.0f, 0.0f);
                 m_MainCamera.transform.SetPositionAndRotation(new Vector3(0.0f, 5.0f, -20.0f), cameraRotation); //真横からのドラマティックカメラに移動
+                WorldUIManager.Instance.ForceUIParent.gameObject.SetActive(true);
+                WorldUIManager.Instance.StateUIParent.gameObject.SetActive(true);
                 break;
         }
     }
@@ -292,24 +315,22 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
                 default:
                     break;
                 case MouseButton.Right:                             //=========================右クリック時==========================
-                    if (SelectingState != null) SelectingState.ResetStateColor();       //選択ステートの色をリセット
+                    if (SelectingState != null) SelectingState.ResetStateColor();   //選択ステートの色をリセット
 
-                    selectingProvince = hit.collider.GetComponent<Province>(); //クリックしたプロヴィンス
-                    SelectingState = selectingProvince.OwnedState;                      //選択ステートに設定
+                    selectingProvince = hit.collider.GetComponent<Province>();      //クリックしたプロヴィンス
+                    SelectingState = selectingProvince.OwnedState;                  //選択ステートに設定
                     SelectingCountry = SelectingState.OwnedCountry;
-                    SelectingState.SetStateColor(FieldManager.Instance.StateColorDict[StateColorType.Selecting]);              //新しい選択ステートの色をセット
-                    OpenStateMenu();                                                 //戦術メニューオープン
+                    OpenStateMenu();                                                //戦術メニューオープン
                     break;
                 case MouseButton.Left:                              //=========================左クリック時==========================
                     if (hit.collider.GetComponent<Province>().OwnedState.OwnedCountry == null) return;
 
-                    if (SelectingState != null) SelectingState.ResetStateColor();       //選択ステートの色をリセット
+                    if (SelectingState != null) SelectingState.ResetStateColor();   //選択ステートの色をリセット
 
-                    selectingProvince = hit.collider.GetComponent<Province>(); //クリックしたプロヴィンス
-                    SelectingState = selectingProvince.OwnedState;                      //選択ステートに設定
+                    selectingProvince = hit.collider.GetComponent<Province>();      //クリックしたプロヴィンス
+                    SelectingState = selectingProvince.OwnedState;                  //選択ステートに設定
                     SelectingCountry = SelectingState.OwnedCountry;
-                    SelectingState.SetStateColor(FieldManager.Instance.StateColorDict[StateColorType.Selecting]);              //新しい選択ステートの色をセット
-                    OpenCountryMenu();
+                    OpenCountryMenu();                                              //国家メニューオープン
                     break;
             }
         }
@@ -358,7 +379,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
         RaycastHit hit;
 
-        Province pointProv;
+        Province pointProv = null;
 
         if (m_IsPointerOverUI)   //UI側で目指すステートを選択中だったら
         {
@@ -375,7 +396,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
                 {
                     foreach (var prov in list)
                     {
-                        if (prov.proviince == pointProv) //もしポイントしたプロヴィンスとクリック可能プロヴィンスの中で同じものがあれば
+                        if (prov.province == pointProv) //現在ポイントしているプロヴィンスが含まれている辞書の値が見つかった
                         {
                             if (prov.selectableState != null && prov.selectableState.Count > 0) //nullチェック
                             {
@@ -383,32 +404,49 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
                                 {
                                     CurrentSelectingStateBorder = prov.selectableState[0];
                                     HighLightPointingBorder(prov.selectableState[0]);  //国境上にマウスオーバーした場合、国境をハイライト
+                                    //Debug.Log("初めてこの選択プロヴィンスに触れたよ");
+                                    return;
                                 }
                                 else if (CurrentSelectingStateBorder == prov.selectableState[0])  //もし前回の国境と同じなら
                                 {
                                     HighLightPointingBorder(prov.selectableState[0]);  //国境上にマウスオーバーした場合、国境をハイライト
+                                    //Debug.Log("今は「" + prov.selectableState[0].StateNameJP + "」に関連するステートに触れているよ");
+                                    return;
                                 }
                                 else    //前回とポイントしてるモノが違ったら
                                 {
                                     CurrentSelectingStateBorder = prov.selectableState[0];
                                     FieldManager.Instance.HighLightProvince();    //マウスオーバーされてなければ元のハイライトに戻す
+                                    //Debug.Log("「" + prov.selectableState[0].StateNameJP + "」に関連するステートに変わったよ");
+                                    return;
                                 }
                             }
                         }
                     }
                 }
+
+                CurrentSelectingStateBorder = null;
+                FieldManager.Instance.HighLightProvince();    //マウスオーバーされてなければ元のハイライトに戻す
+                //Debug.Log("自国のプロヴィンスに当たってないよ");
+                return;
             }
             else    //プロヴィンス以外のモノに当たれば
             {
                 CurrentSelectingStateBorder = null;
                 FieldManager.Instance.HighLightProvince();    //マウスオーバーされてなければ元のハイライトに戻す
+                //Debug.Log("プロヴィンスに当たってないよ");
+                return;
             }
         }
         else    //もしなんにも当たらなければ
         {
             CurrentSelectingStateBorder = null;
             FieldManager.Instance.HighLightProvince();    //マウスオーバーされてなければ元のハイライトに戻す
+            //Debug.Log("何にも当たってないよ");
+            return;
         }
+
+        //Debug.Log(pointProv.OwnedState.StateNameJP + "  " + CurrentSelectingStateBorder.StateNameJP);
     }
 
     public void OpenTacticalMenu()
@@ -431,6 +469,11 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     /// <param name="menuIndex"></param>
     public void OpenTacticalMenu(int menuIndex)
     {
+        if (menuIndex == 2 && SelectingCountry != PlayerCountry)
+        {
+            return;
+        }
+
         MenuType menu = (MenuType)menuIndex;
 
         SetLabel(menuIndex);    //メニューラベル変更
@@ -461,6 +504,10 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         MenuDict[MenuType.State].GetComponent<StateMenu>().SetStateData(SelectingState);   //戦術メニューテキスト入力
 
         SetLabel(0);
+
+        ResetOwnedAllStateColor(SelectingCountry);
+
+        SelectingState.SetStateColor(FieldManager.Instance.StateColorDict[StateColorType.Selecting]);   //新しい選択ステートの色をセット
     }
 
     public void OpenCountryMenu()
@@ -475,6 +522,8 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         }
 
         SetLabel(1);
+
+        ChangeOwnedAllStateColor(SelectingCountry, FieldManager.Instance.StateColorDict[StateColorType.Selecting]);
     }
 
     public void OpenForcesMenu()
@@ -515,9 +564,10 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     {
         ResetAllMenu();
         m_TacticalMenu.gameObject.SetActive(false); //戦術メニュークローズ
+
         if (SelectingState != null)
         {
-            SelectingState.ResetStateColor();       //プロヴィンスの色を戻す
+            ResetOwnedAllStateColor(SelectingCountry);  //ステートの色を戻す                  
         }
 
         SelectingState = null;                      //選択ステートを消去
@@ -658,7 +708,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         {
             foreach (var prov in list[target])   //そのステートに関与しうるプロヴィンスを全部
             {
-                prov.proviince.SetProvinceColor(new Vector3(1.0f, 1.0f, 0.6f));  //色を変える
+                prov.province.SetProvinceColor(new Vector3(1.0f, 1.0f, 0.6f));  //色を変える
             }
         }
     }
@@ -675,7 +725,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         {
             foreach (var prov in list[target])   //そのステートに関与しうるプロヴィンスを全部
             {
-                prov.proviince.SetProvinceColor(new Vector3(1.0f, 1.0f, 0.6f));  //色を変える
+                prov.province.SetProvinceColor(new Vector3(1.0f, 1.0f, 0.6f));  //色を変える
             }
         }
 
@@ -710,6 +760,34 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     public void ChangeEditingState(EditState state)
     {
         CurrentEditState = state;
+    }
+
+    /// <summary>
+    /// その勢力に属するステートを総て色替えする
+    /// </summary>
+    /// <param name="country"></param>
+    public void ChangeOwnedAllStateColor(CountryData country, Vector3 color)
+    {
+        var states = FieldManager.Instance.GetOwnedStateList(country);
+
+        foreach (var state in states)
+        {
+            state.SetStateColor(color);
+        }
+    }
+
+    /// <summary>
+    /// その勢力に属するステートを総て元に戻す
+    /// </summary>
+    /// <param name="country"></param>
+    public void ResetOwnedAllStateColor(CountryData country)
+    {
+        var states = FieldManager.Instance.GetOwnedStateList(country);
+
+        foreach (var state in states)
+        {
+            state.SetStateColor(country.CountryColor);
+        }
     }
 
     /// <summary>
@@ -767,15 +845,6 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         m_TimeCounter.ChangeTimeImage(false);   //一応、UIも変更
 
         var player = PlayerCountry;
-
-        /*if (win)    //勝利時の処理
-        {
-            
-        }
-        else        //敗北時の処理
-        {
-
-        }*/
 
         m_ResultUI.gameObject.SetActive(true);  //リザルト画面を表示
 

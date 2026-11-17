@@ -65,6 +65,7 @@
     <Compile Include="Assets\Script\Manager\NotificationManager.cs" />
     <Compile Include="Assets\Script\InGameUI\InventryUI.cs" />
     <Compile Include="Assets\Script\InGameUI\Notification\NotificationUI.cs" />
+    <Compile Include="Assets\Script\InGameUI\Notification\TakeAttackNotificationUI.cs" />
     <Compile Include="Assets\UniGif\UniGifConst.cs" />
     <Compile Include="Assets\Script\State\Province.cs" />
     <Compile Include="Assets\Script\InGameUI\DiplomacyMenu.cs" />
@@ -91,6 +92,7 @@
     <Compile Include="Assets\Script\InGameUI\TimeCounterUI.cs" />
     <Compile Include="Assets\Script\InGameUI\FlagAndNameUI.cs" />
     <Compile Include="Assets\UniGif\UniGif.cs" />
+    <Compile Include="Assets\Script\GameData\CommanderData.cs" />
     <Compile Include="Assets\UniGif\Example\Script\UniGifTest.cs" />
     <Compile Include="Assets\Script\GameData\CountryData.cs" />
     <Compile Include="Assets\Script\InGameUI\BuildingUI.cs" />

@@ -50,7 +50,7 @@ public class ModelManager : SingletonManager<ModelManager>
 
                     foreach (var prov in country.RelateStateDict[target]) //指定したステートの国境のプロヴィンスを取得
                     {
-                        borderMidPos += prov.proviince.transform.position;
+                        borderMidPos += prov.province.transform.position;
                     }
 
                     borderMidPos = borderMidPos / country.RelateStateDict[target].Count;  //平均値を取って国境の中央座標を取得

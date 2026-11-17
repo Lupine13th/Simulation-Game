@@ -30,27 +30,19 @@ public class DiplomacyMenu : TacticalMenu
     public CountryData SelectingCountry { get; private set; }
 
     private List<FlagAndNameUI> m_FlagNamePrefabList = new List<FlagAndNameUI>();
+    private List<CountryButton> m_CountryButtonList = new List<CountryButton>();
 
     public override void Init()
     {
+        for (int i = 0; i < m_CountryButtonList.Count; i++)
+        {
+            Destroy(m_CountryButtonList[i].gameObject);
+        }
+
+        m_CountryButtonList.Clear();
+
         foreach (var country in FieldManager.Instance.CountryList)
         {
-            /*if (country == BattleSystemManager.Instance.SelectingCountry)   //もし選択中の国家と同じだったら
-            {
-                continue;   //無視
-            }
-            else
-            {
-                CountryButton button = Instantiate(m_CountryButtonPrefab, m_CountryButtonParent);   //ボタン精製
-
-                button.SetButtonData(country);              //国家データを入力
-                button.SetCountryText(country.CountryName); //国家名登録
-                //button.SetFavorText();    //TODO:友好度を入力
-                button.SetFlagImage(country.CountryFlag);   //旗も登録
-
-                button.Button.onClick.AddListener(() => SetSelectingCountryOnDiplomacyMenu(country));   //ボタンをクリック時に「選択中の国家を設定する」機能を追加
-            }*/
-
             CountryButton button = Instantiate(m_CountryButtonPrefab, m_CountryButtonParent);   //ボタン精製
 
             button.SetButtonData(country);              //国家データを入力
@@ -59,7 +51,14 @@ public class DiplomacyMenu : TacticalMenu
             button.SetFlagImage(country.CountryFlag);   //旗も登録
 
             button.Button.onClick.AddListener(() => SetSelectingCountryOnDiplomacyMenu(country));   //ボタンをクリック時に「選択中の国家を設定する」機能を追加
+
+            m_CountryButtonList.Add(button);            //リストに追加
         }
+
+        SetSelectingCountryOnDiplomacyMenu(BattleSystemManager.Instance.SelectingCountry); //ステート上での選択中の国家を選択状態にする
+
+        BattleSystemManager.Instance.ResetOwnedAllStateColor(BattleSystemManager.Instance.SelectingCountry);                        //ステート色を一旦リセット
+        BattleSystemManager.Instance.ChangeOwnedAllStateColor(BattleSystemManager.Instance.SelectingCountry, FieldManager.Instance.StateColorDict[StateColorType.Selecting]);   //勢力に属するステート全ての色を変更
     }
 
     /// <summary>

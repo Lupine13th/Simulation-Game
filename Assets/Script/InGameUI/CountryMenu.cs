@@ -17,6 +17,8 @@ public class CountryMenu : TacticalMenu
     public override void Init()
     {
         SetCountryDataforMenu(BattleSystemManager.Instance.SelectingCountry);
+        BattleSystemManager.Instance.ResetOwnedAllStateColor(BattleSystemManager.Instance.SelectingCountry);                        //ステート色を一旦リセット
+        BattleSystemManager.Instance.ChangeOwnedAllStateColor(BattleSystemManager.Instance.SelectingCountry, FieldManager.Instance.StateColorDict[StateColorType.Selecting]);   //勢力に属するステート全ての色を変更
     }
 
     public async Task SetCountryDataforMenu(CountryData country)
@@ -25,9 +27,11 @@ public class CountryMenu : TacticalMenu
         m_IdeoloryText.SetText(country.ForceIdeology);  //資源
         m_IdeoloryText.color = SetTextColor(country.LargeIdeology);
         m_MainCultureText.SetText(country.MainCountryCultureJP);
-        //m_AllResourceText.SetText(state.Income.ToString());    //収入
-        //m_IncomeText.SetText(state.Income.ToString());    //収入
-        //m_PopulationText.SetText(state.Population.ToString());  //人口
+
+        country.CalculateDateGDP();
+
+        m_AllResourceText.SetText(country.AllResource.ToString());
+        m_AllIncomeText.SetText(country.AllIncome.ToString());
 
         m_CountryFlag.sprite = country.CountryFlag;
         m_LeaderPortrait.sprite = country.LeaderPortrait;
