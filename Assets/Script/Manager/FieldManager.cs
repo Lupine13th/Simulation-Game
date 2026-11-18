@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem.Controls;
 using static Province;
-using static UnityEditor.Experimental.AssetDatabaseExperimental.AssetDatabaseCounters;
 
 public enum ProvinceColor
 {
@@ -45,7 +43,7 @@ public struct ClickableProvinceData
 {
     public ForcePositionType type;
     public List<State> selectableState;
-    public Province proviince;
+    public Province province;
 }
 
 public struct BuildingData
@@ -60,13 +58,6 @@ public struct BuildingData
 
 public class FieldManager : SingletonManager<FieldManager>
 {
-    [Serializable]
-    public struct MaterialKeyValue
-    {
-        public ProvinceColor color;
-        public Material Material;
-    }
-
     [Header("生成されたステートのリスト")]
     [SerializeField] private List<State> m_StateList  = new List<State>();                                              //全ステートリスト
 
@@ -89,10 +80,6 @@ public class FieldManager : SingletonManager<FieldManager>
 
     [Header("生成される勢力数(調整用)")]
     [SerializeField] private int m_CountryCount;
-
-    [SerializeField] List<MaterialKeyValue> m_ProvinceMaterialSetting = new List<MaterialKeyValue>();
-
-    [SerializeField] private TextMeshProUGUI m_TimeText;
 
     public List<State> StateList => m_StateList;
 
@@ -121,11 +108,6 @@ public class FieldManager : SingletonManager<FieldManager>
     /// </summary>
     public Dictionary<Vector2Int, Province> OutSideProvinceDict { get; private set; } = new Dictionary<Vector2Int, Province>();
 
-    /// <summary>
-    /// プロヴィンス色をキーに入っているディクショナリー
-    /// </summary>
-    public Dictionary<ProvinceColor, Material> ProvinceMaterialDict { get; private set; } = new Dictionary<ProvinceColor, Material>();
-
     public Dictionary<int, StateData> StateDataDict { get; private set; } = new Dictionary<int, StateData>();   //ステートデータ
     public Dictionary<LIdeology, List<string>> FOGovermentDict { get; private set; } = new Dictionary<LIdeology, List<string>>();
     public Dictionary<BuildingType, BuildingData> BuildingDataDict { get; private set; } = new Dictionary<BuildingType, BuildingData>();
@@ -141,7 +123,8 @@ public class FieldManager : SingletonManager<FieldManager>
     {
         { StateColorType.Selecting, new Vector3(0.16f, 1.0f, 0.22f) },
         { StateColorType.Border, new Vector3(1.0f, 0.2f, 0.2f) },
-        { StateColorType.Garrison, new Vector3(0.2f, 0.2f, 1.0f) },
+        { StateColorType.Guarrison, new Vector3(0.2f, 0.2f, 1.0f) },
+        { StateColorType.AttackDisable, new Vector3(0.8f, 0.0f, 0.8f) },
     };
 
     public Dictionary<PlayerData, CountryData> CountryDictPlayerKey { get; private set; } = new Dictionary<PlayerData, CountryData>();
@@ -155,9 +138,10 @@ public class FieldManager : SingletonManager<FieldManager>
 
     public bool IsPlaying { get; private set; } = false;
 
+
     async void Start()
     {
-        m_TimeText.SetText(FieldTime[TimeType.Hour].ToString() + ". " + FieldTime[TimeType.Day].ToString() + ". " + FieldTime[TimeType.Month].ToString() + ". " + FieldTime[TimeType.Year].ToString());
+        BattleSystemManager.Instance.TimeCounterUI.TimerText.SetText(FieldTime[TimeType.Hour].ToString() + ". " + FieldTime[TimeType.Day].ToString() + ". " + FieldTime[TimeType.Month].ToString() + ". " + FieldTime[TimeType.Year].ToString());
 
         //=====================ステート生成フェーズ====================
         List<int> instancedId = new List<int>();
@@ -221,30 +205,34 @@ public class FieldManager : SingletonManager<FieldManager>
 
             PlayerData playerData = Instantiate(m_PlayerDataPrefab, m_PlayerDataListParent);    //プレイヤー生成
 
-            if (i == 0)
-            {
-                playerData.SetPlayer(true, i);  //インデックス1番にプレイヤーを当てはめる
-
-                country.SetInventryUI();        //プレイヤー国家のデータをUIに反映
-            }
-            else
-            {
-                playerData.SetPlayer(false, i); //それ以外はAI
-            }
-
             playerData.SetCountryData(country);     //プレイヤーに国家データを持たせる
             country.SetPlayerData(playerData);      //国家にもプレイヤーを参照できるように
 
             CountryDictPlayerKey.Add(playerData, country);  //辞書型に登録
 
             await country.SetCountryData();     //csvデータから国家のデータを登録
+
+            if (i == 0)
+            {
+                playerData.SetPlayer(true, i);  //インデックス1番にプレイヤーを当てはめる
+
+                BattleSystemManager.Instance.SetPlayerCountry(country);  //初代インデックスにプレイヤーを入れる
+
+                country.SetInventryUI();
+                BattleSystemManager.Instance.InventryUI.Init(); //プレイヤー国家のデータをUIに反映
+            }
+            else
+            {
+                playerData.SetPlayer(false, i); //それ以外はAI
+            }
         }
 
-        BattleSystemManager.Instance.SetPlayerCountry(CountryList[0]);  //初代インデックスにプレイヤーを入れる
         //=====================国家生成フェーズEnd=================
 
         //ステートUIの初期化
         WorldUIManager.Instance.Init();
+
+        BattleSystemManager.Instance.TimeCounterUI.UpdateGage(FieldTime[TimeType.Hour]);    //タイマーのゲージを更新
     }
 
     void Update()
@@ -359,13 +347,13 @@ public class FieldManager : SingletonManager<FieldManager>
     /// <summary>
     /// 戦場を更新する(ゲーム内で言うと一時間ごとに更新)
     /// </summary>
-    private void UpdateBattleField()
+    private async Task UpdateBattleField()
     {
         TimeCount++;                        //時間カウント(おそらくイベントのカウントとかで使う用)
 
         FieldTime[TimeType.Hour]++;         //1時間更新
 
-        foreach (var country in CountryList)
+        foreach (var country in CountryList.ToArray())
         {
             country.UpdateCountryDataOnHour();    //国家ごとの情報更新(時毎)
 
@@ -387,6 +375,8 @@ public class FieldManager : SingletonManager<FieldManager>
             {
                 country.UpdateCountryDataOnDate();//国家ごとの情報更新(日毎)
             }
+
+            AudioManager.Instance.PlaySE(SEType.Chaim, await AddressableManager.Instance.LoadAudioClipAsync(AddressableManager.Instance.SEAudioClipAddress[SEType.Chaim]));
         }
 
         if (FieldTime[TimeType.Day] >= 31)  //31日以降になると
@@ -402,7 +392,8 @@ public class FieldManager : SingletonManager<FieldManager>
         }
 
         //行進した時間をテキストにセット
-        m_TimeText.SetText(FieldTime[TimeType.Hour].ToString() + ". " + FieldTime[TimeType.Day].ToString() + ". " + FieldTime[TimeType.Month].ToString() + ". " + FieldTime[TimeType.Year].ToString()); 
+        BattleSystemManager.Instance.TimeCounterUI.TimerText.SetText(FieldTime[TimeType.Hour].ToString() + ". " + FieldTime[TimeType.Day].ToString() + ". " + FieldTime[TimeType.Month].ToString() + ". " + FieldTime[TimeType.Year].ToString());
+        BattleSystemManager.Instance.TimeCounterUI.UpdateGage(FieldTime[TimeType.Hour]);    //タイマーのゲージを更新
     }
 
     public CountryData GetCountryFromPlayer(PlayerData player)
@@ -420,14 +411,29 @@ public class FieldManager : SingletonManager<FieldManager>
         return CountryDictPlayerKey.FirstOrDefault(pair => pair.Value == country).Key;  //見つからない場合は型に応じたデフォルト値（null）が返る
     }
 
-    public void PlayTimeCount()
+    public async Task PlayTimeCount()
     {
         IsPlaying = true;
+        AudioManager.Instance.PlayBGM(BGMType.Timer, await AddressableManager.Instance.LoadAudioClipAsync(AddressableManager.Instance.BGMAudioClipAddress[BGMType.Timer]));
     }
 
     public void StopTimeCount()
     {
         IsPlaying = false;
+        AudioManager.Instance.StopBGM(BGMType.Timer);
+    }
+
+    public void ChangeTimePlaying()
+    {
+        switch (IsPlaying)
+        {
+            case false:
+                PlayTimeCount();
+                break;
+            case true:
+                StopTimeCount();
+                break;
+        }
     }
 
     /// <summary>
@@ -449,7 +455,7 @@ public class FieldManager : SingletonManager<FieldManager>
 
             if (GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //国境プロヴィンスの中でもプレイヤーのステートをマーク
             {
-                state.GetBorderProvinceList();
+                ChangeProvinceColorFromStateDict(state.OwnedCountry.RelateStateDict);    //プロヴィンスの色を非カーソル時の色に戻す
             }
         }
     }
@@ -466,7 +472,7 @@ public class FieldManager : SingletonManager<FieldManager>
 
             if (GetPlayerFromCountry(state.OwnedCountry).IsPlayer)  //国境プロヴィンスの中でもプレイヤーのステートをマーク
             {
-                state.GetBorderProvinceList();
+                ChangeProvinceColorFromStateDict(state.OwnedCountry.RelateStateDict);    //プロヴィンスの色を非カーソル時の色に戻す
             }
         }
     }
@@ -502,8 +508,6 @@ public class FieldManager : SingletonManager<FieldManager>
         force.SetTargetState(state);                //攻撃目標を設定
         force.SetGuarrisonState(null);              //駐屯ステートを初期化
 
-        //===========モデルに関する処理==========
-
         if (country == BattleSystemManager.Instance.PlayerCountry)  //このメソッドを呼んだのがプレイヤーの場合
         {
             force.LinkedUI.RefreshPositionName();       //UIの現在地を更新
@@ -513,7 +517,7 @@ public class FieldManager : SingletonManager<FieldManager>
 
         if (beforeState != null)
         {
-            if (country.CheckForceOnThisState(beforeState).Count == 0)                 //移動前の駐屯ステートに兵が居なければ
+            if (country.CheckForceOnThisState(beforeState).Count == 0)          //移動前の駐屯ステートに兵が居なければ
             {
                 if (country.GuardingForceGroupDict.ContainsKey(beforeState))    //ヌルチェック
                 {
@@ -545,18 +549,23 @@ public class FieldManager : SingletonManager<FieldManager>
 
         if (country.BattleModelDict.ContainsKey(state))
         {
-            if (country.BattleModelDict[state] == null) //モデルが配置されて居なかったら
+            if (country.BattleModelDict[state] == null) //モデルが配置されていない(まだこのステートに対する前線に軍団がいない)
             {
                 var group = new ForceGroup();
 
-                group.SetAttackState(state);   //駐屯ステートを登録
+                group.SetAttackState(state);            //駐屯ステートを登録
                 group.ThisPlaceForceList.Add(force);    //この軍団を大軍団に加える
                 group.UpdateDatas();
 
                 country.AttackingForceGroupDict.Add(state, group);            //駐屯中のステートにおける大軍団データを生成
 
-                force.SetBelongGroup(country.AttackingForceGroupDict[state]);            //軍団側に大軍団ポインタを与える
+                force.SetBelongGroup(country.AttackingForceGroupDict[state]);           //軍団側に大軍団ポインタを与える
                 ModelManager.Instance.ChangeBattleModel(true, state, country, force.BelongGroup);   //国境沿いに侵攻アニメーションのモデルを配置
+
+                if (state.OwnedCountry == BattleSystemManager.Instance.PlayerCountry)   //もし進行先がプレイヤー勢力なら
+                {
+                    NotificationManager.Instance.InstanciateTakeAttackNotice(country, state);   //通知ポップアップ生成
+                }
             }
             else
             {
@@ -571,7 +580,7 @@ public class FieldManager : SingletonManager<FieldManager>
             BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
         }
 
-        //===========モデルに関する処理==========
+        WorldUIManager.Instance.UpdateForceUI();    //軍団情報更新
     }
 
     /// <summary>
@@ -644,16 +653,18 @@ public class FieldManager : SingletonManager<FieldManager>
         else
         {
             country.GuardingForceGroupDict[state].ThisPlaceForceList.Add(force);    //この軍団を大軍団に加える
-            country.GuardingForceGroupDict[state].SetGuarrisonState(state);   //駐屯ステートを登録
+            country.GuardingForceGroupDict[state].SetGuarrisonState(state);         //駐屯ステートを登録
             force.SetBelongGroup(country.GuardingForceGroupDict[state]);            //軍団側に大軍団ポインタを与える
         }
+
+        //===========モデルに関する処理==========
 
         if (BattleSystemManager.Instance.PlayerCountry == force.OwnerCountry)
         {
             BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
         }
 
-        //===========モデルに関する処理==========
+        WorldUIManager.Instance.UpdateForceUI();    //軍団情報更新
     }
 
     /// <summary>
@@ -682,7 +693,15 @@ public class FieldManager : SingletonManager<FieldManager>
         {
             Debug.LogWarning("所有している州を発見できず");
             DeleteCountry(country);                         //国家を削除
-            return null;
+            if (CheckPlayerIsDead())    //もしプレイヤー国家が無ければ
+            {
+                BattleSystemManager.Instance.GameOver(false);   //プレイヤー敗北時演出
+            }
+            else if (CheckPlayerIsOnlyAlive())
+            {
+                BattleSystemManager.Instance.GameOver(true);    //プレイヤー勝利時演出
+            }
+                return null;
         }
         else                    //所有している州があれば
         {
@@ -691,7 +710,7 @@ public class FieldManager : SingletonManager<FieldManager>
     }
 
     /// <summary>
-    /// ワールドの全てのステートから第二引数に領有されているステートを割り出す
+    /// ワールドの全てのステートから第二引数の勢力に領有されているステートを割り出す
     /// その後、そのステートにおける国境プロヴィンスリストを手に入れて、
     /// ステートが持つプロヴィンスごとに国境プロヴィンスか駐屯プロヴィンスかを仕分けする。
     /// </summary>
@@ -704,9 +723,6 @@ public class FieldManager : SingletonManager<FieldManager>
         var disableList = country.AttackDisableStateList;
         disableList.Clear();
 
-        //国境の種類を列挙
-        var borderProvinceList = new List<Province>();
-
         foreach (var state in m_StateList)  //ステートリストからcountryが持つステートを割り出す
         {
             if (state.OwnedCountry == null)
@@ -714,18 +730,9 @@ public class FieldManager : SingletonManager<FieldManager>
 
             if (state.OwnedCountry == country)  //現在のステートが指定した勢力に属している
             {
-                if (country == BattleSystemManager.Instance.PlayerCountry)  //呼び出したのがプレイヤーの時のみ
-                {
-                    //自分のステートをマークする
-                    state.SetStateColor(new Vector3(0.8f, 0.8f, 0.8f));
-                }
-
-                //国境プロヴィンスの色を変える()
-                borderProvinceList = state.GetBorderProvinceList();
-
                 foreach (var prov in state.ProvinceList)
                 {
-                    if (borderProvinceList.Contains(prov))  //国境プロヴィンスは国境として登録
+                    if (BorderProvinceDict.ContainsValue(prov))  //国境プロヴィンスは国境として登録
                     {
                         foreach (var nState in prov.NeighberStateList)  //そのプロヴィンスが隣接しているステートの数分、回す(複数のステートと隣接している場合にしっかりとUIとデータに反映するため)
                         {
@@ -733,35 +740,48 @@ public class FieldManager : SingletonManager<FieldManager>
                             {
                                 if (!state.OwnedCountry.EnemyCountryList.Contains(nState.state.OwnedCountry))   //かつ、その隣接しているステートの勢力と現在のステートの勢力が戦争状態に無い
                                 {
-                                    disableList.Add(nState.state);  //
+                                    disableList.Add(nState.state);
+
+                                    //-----------国境プロヴィンスだけど隣の勢力と戦争状態じゃないばあい、そのプロヴィンス自体は駐屯プロヴィンスとして扱う-----------
+
+                                    /*if (dict.ContainsKey(prov.OwnedState))  //既にそのステートデータで辞書が作られているか
+                                    {
+                                        dict[prov.OwnedState].Add(new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = new List<State>() { prov.OwnedState }, province = prov });
+                                    }
+                                    else
+                                    {
+                                        dict.Add(prov.OwnedState, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = PickUpNeighberStates(prov.NeighberStateList), province = prov } });
+                                    }*/
+
                                     continue;                       //戦争状態じゃない勢力には攻め込めないため、無視
                                 }
                             }
 
                             if (dict.ContainsKey(nState.state))    //既にそのステートデータで辞書が作られているか
                             {
-                                dict[nState.state].Add(new ClickableProvinceData() { type = ForcePositionType.Border, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov });
+                                dict[nState.state].Add(new ClickableProvinceData() { type = ForcePositionType.Border, selectableState = PickUpNeighberStates(prov.NeighberStateList), province = prov });
                             }
                             else
                             {
-                                dict.Add(nState.state, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Border, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov } });
+                                dict.Add(nState.state, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Border, selectableState = PickUpNeighberStates(prov.NeighberStateList), province = prov } });
                             }
                         }
                     }
                     else                                    //国境プロヴィンスじゃない場合は駐屯地として登録
                     {
-                        if (dict.ContainsKey(prov.OwnedState))
+                        if (dict.ContainsKey(prov.OwnedState))      //既にそのステートデータで辞書が作られているか
                         {
-                            dict[prov.OwnedState].Add(new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = new List<State>() { prov.OwnedState }, proviince = prov });
+                            dict[prov.OwnedState].Add(new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = new List<State>() { prov.OwnedState }, province = prov });
                         }
                         else
                         {
-                            dict.Add(prov.OwnedState, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = PickUpNeighberStates(prov.NeighberStateList), proviince = prov } });
+                            dict.Add(prov.OwnedState, new List<ClickableProvinceData>() { new ClickableProvinceData() { type = ForcePositionType.Guarrison, selectableState = PickUpNeighberStates(prov.NeighberStateList), province = prov } });
                         }
                     }
                 }
             }
-        }
+        }   //指定した勢力のステート内のプロヴィンスを仕分け完了
+
     }
 
     /// <summary>
@@ -831,5 +851,65 @@ public class FieldManager : SingletonManager<FieldManager>
         }
         CountryList.Remove(country);                            //マネージャから国家を削除
         CountryDictPlayerKey.Remove(country.OwnedPlayerData);   //プレイヤーから検索できる辞書型も削除
+    }
+
+    /// <summary>
+    /// プレイヤー勢力がまだ残っているかを確認する trueで残っていない
+    /// </summary>
+    public bool CheckPlayerIsDead()
+    {
+        foreach (var country in CountryDictPlayerKey.Keys)
+        {
+            if (country.IsPlayer)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// フィールドにいるのがプレイヤーのみかを確認　trueでプレイヤーのみ
+    /// </summary>
+    public bool CheckPlayerIsOnlyAlive()
+    {
+        foreach (var country in CountryDictPlayerKey.Keys)
+        {
+            if (!country.IsPlayer)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// プレイヤーが編集モード時にステート内のプロヴィンスの色を変更する
+    /// </summary>
+    /// <returns></returns>
+    public void ChangeProvinceColorFromStateDict(Dictionary<State, List<ClickableProvinceData>> provDict)
+    {
+        foreach(var provList in provDict.Values)
+        {
+            foreach (var prov in provList) 
+            {
+                switch (prov.type)
+                {
+                    case ForcePositionType.Border:      //「国境」で登録されているプロヴィンスは
+                        prov.province.SetProvinceColorInEditMode(StateColorType.Border);  //赤色に
+                        break;
+                    case ForcePositionType.Guarrison:
+                        if (prov.province.CurrentColorInEditMode == StateColorType.Border)  //既に国境プロヴィンスの色になっていたら
+                        {
+                            break;                                                          //そっちを優先
+                        }
+                        prov.province.SetProvinceColorInEditMode(StateColorType.Guarrison); //青色に
+                        break;
+                }
+            }
+            
+        }
     }
 }

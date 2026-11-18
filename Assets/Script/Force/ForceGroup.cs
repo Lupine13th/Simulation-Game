@@ -1,12 +1,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum BattleResult
+{
+    None,
+    Win,
+    Lose,
+    Draw
+}
+
 public class ForceGroup
 {
     /// <summary>
     /// このステート及び国境にいる軍団
     /// </summary>
     public List<Force> ThisPlaceForceList { get; private set; } = new List<Force>();
+
+    /// <summary>
+    /// このステート及び国境にいる軍団
+    /// </summary>
+    public List<BattleResult> BattleResultList { get; private set; } = new List<BattleResult>();
 
     /// <summary>
     /// 攻撃中のステート(攻撃していない時はnull)
@@ -22,6 +35,18 @@ public class ForceGroup
     /// この軍団の総兵力
     /// </summary>
     public int AllSoldier { get; private set; }
+
+    /// <summary>
+    /// 戦闘を行っていないカウント(1時間ごとに1増加)
+    /// </summary>
+    public int NotBattleCount { get; private set; }
+
+    /// <summary>
+    /// この時間ぶん戦闘が起きなければ回復が始まる
+    /// </summary>
+    public const int MaxNotBattleCount = 3;
+
+    public bool InBattle { get; private set; } = false;
 
     public void UpdateDatas()
     {
@@ -51,6 +76,18 @@ public class ForceGroup
     public void SetGuarrisonState(State state)
     {
         GuardingState = state;
+    }
+
+    /// <summary>
+    /// 全軍団を回復させる(士気も回復)
+    /// </summary>
+    public void HealAllForces()
+    {
+        foreach (var force in ThisPlaceForceList)
+        {
+            force.HealSoldier1Per();
+            force.HealMorale(1);
+        }
     }
 
     /// <summary>
@@ -112,5 +149,86 @@ public class ForceGroup
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// 戦闘を行ったフラグを変更
+    /// </summary>
+    public void SetInBattle(bool on)
+    {
+        InBattle = on;
+    }
+
+    /// <summary>
+    /// 戦闘結果を追加
+    /// </summary>
+    /// <param name="result"></param>
+    public void AddBattleResult(BattleResult result)
+    {
+        BattleResultList.Add(result);
+    }
+
+    /// <summary>
+    /// その日の総合戦闘結果を出す
+    /// </summary>
+    public BattleResult CheckBattleResultOnDate()
+    {
+        var winCount = 0;
+        var loseCount = 0;
+        var drawCount = 0;
+        var mostCountResult = BattleResult.None;
+        var mostCount = 0;
+
+        if (BattleResultList.Count <= 0)    //戦闘を行っていないならNoneを返す
+        {
+            return BattleResult.None;
+        }
+
+        foreach (var result in BattleResultList)
+        {
+            switch (result)                     
+            {
+                case BattleResult.Win:
+                    winCount++;
+                    if (mostCount < winCount)
+                    {
+                        mostCountResult = result;
+                        mostCount = winCount;
+                    }
+                    break;
+                case BattleResult.Lose:
+                    loseCount++;
+                    if (mostCount < loseCount)
+                    {
+                        mostCountResult = result;
+                        mostCount = loseCount;
+                    }
+                    break;
+                case BattleResult.Draw:
+                    drawCount++;
+                    if (mostCount < drawCount)
+                    {
+                        mostCountResult = result;
+                        mostCount = drawCount;
+                    }
+                    break;
+            }
+
+            
+        }
+
+        
+        
+
+        return mostCountResult;
+    }
+
+    /// <summary>
+    /// 戦闘結果をクリア
+    /// </summary>
+    /// <param name="result"></param>
+    public void ResetBattleResult()
+    {
+        BattleResultList.Clear();
     }
 }

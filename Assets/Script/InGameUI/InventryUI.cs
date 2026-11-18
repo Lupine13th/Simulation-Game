@@ -25,7 +25,19 @@ public class InventryUI : MonoBehaviour
     [Header("総資源のテキスト")]
     [SerializeField] private TextMeshProUGUI m_ResourceText;
 
+    [Header("プレイヤー勢力名のテキスト")]
+    [SerializeField] private TextMeshProUGUI m_PlayerCountryNameText;
+
+    [Header("プレイヤー勢力の国旗イメージ")]
+    [SerializeField] private Image m_PlayerCountryFlagImage;
+
     private const float kMaxBarWidth = 400f;
+
+    public void Init()
+    {
+        m_PlayerCountryNameText.SetText(BattleSystemManager.Instance.PlayerCountry.CountryName);
+        m_PlayerCountryFlagImage.sprite = BattleSystemManager.Instance.PlayerCountry.CountryFlag;
+    }
 
     public void SetUI(InventryUIContainer container)
     {

@@ -46,7 +46,8 @@ public enum StateColorType
 {
     Selecting,
     Border,
-    Garrison
+    Guarrison,
+    AttackDisable,
 }
 
 public struct ColorData
@@ -264,36 +265,6 @@ public class State : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// ステート内の国境プロヴィンスを探し出し、プレイヤーの場合は色の変更も行う
-    /// </summary>
-    /// <returns></returns>
-    public List<Province> GetBorderProvinceList()
-    {
-        List<Province> borderProvinceList = new List<Province>();   //マークした国境プロヴィンスのリストを作成
-
-        foreach (var prov in m_ProvinceList)    //このステートのプロヴィンスの中で
-        {
-            if (FieldManager.Instance.BorderProvinceDict.ContainsKey(prov.ProvincePosition))  //もし国境プロヴィンスだったら(この時点で正しい情報に書き換え済み？)
-            {
-                if (OwnedCountry == BattleSystemManager.Instance.PlayerCountry)
-                {
-                    prov.SetProvinceColor(FieldManager.Instance.StateColorDict[StateColorType.Border]);   //国境プロヴィンスを国境カラーに
-                }
-                borderProvinceList.Add(prov);
-            }
-            else
-            {
-                if (OwnedCountry == BattleSystemManager.Instance.PlayerCountry)
-                {
-                    prov.SetProvinceColor(FieldManager.Instance.StateColorDict[StateColorType.Garrison]);   //駐屯プロヴィンスを駐屯カラーに
-                }
-            }
-        }
-
-        return borderProvinceList;  //マークしたプロヴィンスを返す
-    }
-
     public void ResetStateColor()
     {
         Vector3 color = Vector3.one;
@@ -311,7 +282,12 @@ public class State : MonoBehaviour
 
     public void SetOwner(CountryData country)
     {
-        OwnedCountry = country;
+        var lateCountry = OwnedCountry; //過去に所有されていた勢力
+
+        OwnedCountry = country;         //所有勢力を切り替え
+
+        FieldManager.Instance.GetOwnedStateList(lateCountry);  //占領されていた勢力が全ステートを失えば勢力ごと削除
+
         SetStateColor(OwnedCountry.CountryColor);
     }
 
@@ -403,7 +379,6 @@ public class State : MonoBehaviour
 
         if (OccupiedValue > MaxOccupiedValue)   //最大占領よりも占領が大きい場合、ステートの支配権が移る
         {
-            FieldManager.Instance.GetOwnedStateList(OwnedCountry);  //占領されていた勢力が全ステートを失えば勢力ごと削除
             OccupiedCountry = null;
             OccupiedValue = 0;
             SetOwner(occupyingCountry);     //支配権を移行

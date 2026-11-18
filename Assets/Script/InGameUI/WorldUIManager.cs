@@ -37,6 +37,9 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
 
     private Canvas m_UICanvas;
 
+    public Transform StateUIParent => m_StateUIParent;
+    public Transform ForceUIParent => m_ForceUIParent;
+
     private void Start()
     {
         m_MainCamera = Camera.main;
@@ -69,6 +72,9 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
         RefreshUIPosition();
     }
 
+    /// <summary>
+    /// ワールドUIの位置を更新
+    /// </summary>
     public void RefreshUIPosition()
     {
         switch (BattleSystemManager.Instance.CurrentCameraState)    //カメラの状態によって描画距離を切り替える
@@ -110,23 +116,31 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
         {
             List<WorldSpaceUI_Force> garbageList = new List<WorldSpaceUI_Force>();  //ほんとは破棄されるべきUI
 
-            foreach (var ui in ForceUIDict.Values)
+            foreach (var ui in ForceUIDict)
             {
-                if (ui.ForceObject == null) //もし連携しているオブジェクトが空ならば
+                if (ui.Value.ForceObject == null) //もし連携しているオブジェクトが空ならば
                 {
-                    garbageList.Add(ui);    //ゴミ箱に入れて
-                    continue;               //スルー
+                    garbageList.Add(ui.Value);  //ゴミ箱に入れて
+                    continue;                   //スルー
                 }
 
-                Vector3 screenPos = m_MainCamera.WorldToScreenPoint(ui.ForceObject.transform.position);   //カメラから見た軍団モデルの位置をキャンバス上の座標に変換　
+                Vector3 screenPos = m_MainCamera.WorldToScreenPoint(ui.Value.ForceObject.transform.position);   //カメラから見た軍団モデルの位置をキャンバス上の座標に変換　
 
-                RectTransform forceUiPos = ui.GetComponent<RectTransform>();
+                RectTransform forceUiPos = ui.Value.GetComponent<RectTransform>();
 
                 Vector2 localPoint; //キャンバス上のローカル座標
 
                 if (RectTransformUtility.ScreenPointToLocalPointInRectangle(m_ForceUIParent as RectTransform, screenPos, m_MainCamera, out localPoint)) //ワールドUI用キャンバスのアンカーやスケールにフィットさせる
                 {
-                    forceUiPos.localPosition = localPoint;
+                    if (ui.Key.AttackingState != null)  //攻撃中の軍団を表すUIならば
+                    {
+                        forceUiPos.localPosition = localPoint;  //モデルの座標をそのまま
+                    }
+                    else                                //駐屯中の軍団を表すUIならば
+                    {
+                        localPoint.y -= 50;                     //ちょっとしたにズラす
+                        forceUiPos.localPosition = localPoint;  //モデルの座標をそのまま
+                    }
                     forceUiPos.localRotation = Quaternion.identity;
                 }
             }
@@ -182,6 +196,7 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
                 m_StateUIList[i].FlagImage.sprite = null;           //国旗は無しで
 
                 m_StateUIList[i].StateNameText.color = Color.black;
+                m_StateUIList[i].PlayerMarker.gameObject.SetActive(false);
             }
             else
             {
@@ -197,6 +212,15 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
                 else
                 {
                     m_StateUIList[i].StateNameText.color = Color.white;
+                }
+
+                if (m_StateList[i].OwnedCountry == BattleSystemManager.Instance.PlayerCountry)  //もしプレイヤー勢力のタグならば
+                {
+                    m_StateUIList[i].PlayerMarker.gameObject.SetActive(true);
+                }
+                else
+                {
+                    m_StateUIList[i].PlayerMarker.gameObject.SetActive(false);
                 }
             }
 

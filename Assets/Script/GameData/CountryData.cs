@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class CountryData
@@ -23,22 +24,47 @@ public class CountryData
     /// <summary>
     /// 最大総資金
     /// </summary>
-    public int MaxFund { get; private set; } = 10000;
+    public int MaxFund { get; private set; } = 100000;
 
     /// <summary>
     /// 現在の総資金
     /// </summary>
-    public int Fund { get; private set; } = 5000;
+    public int Fund { get; private set; } = 10000;
+
+    /// <summary>
+    /// 総収入
+    /// </summary>
+    public int AllIncome { get; private set; }
 
     /// <summary>
     /// 最大総資源
     /// </summary>
-    public int MaxResource {  get; private set; } = 10000;
+    public int MaxResource {  get; private set; } = 100000;
 
     /// <summary>
     /// 現在の総資源
     /// </summary>
-    public int Resource {  get; private set; } = 5000;
+    public int Resource {  get; private set; } = 10000;
+
+    /// <summary>
+    /// 総資源採掘量
+    /// </summary>
+    public int AllResource { get; private set; }
+
+    /// <summary>
+    /// 合計死傷者数
+    /// </summary>
+    public int DeathCount { get; private set; }
+
+    /// <summary>
+    /// 取得したステート数
+    /// </summary>
+    public int StateGetCount { get; private set; }
+
+    /// <summary>
+    /// 倒した勢力の数
+    /// </summary>
+    public int CountryKillCount { get; private set; }
 
     /// <summary>
     /// 大枠のイデオロギー
@@ -255,6 +281,17 @@ public class CountryData
     }
 
     /// <summary>
+    /// ランダムな指揮官を取得
+    /// </summary>
+    /// <returns></returns>
+    public Sprite GetRandomCommander()
+    {
+        int randomIndex = Random.Range(0, BattleSystemManager.Instance.CommanderPortraitList.Count);
+
+        return BattleSystemManager.Instance.CommanderPortraitList[randomIndex];
+    }
+
+    /// <summary>
     /// 首都を設定
     /// </summary>
     /// <param name="id"></param>
@@ -273,6 +310,7 @@ public class CountryData
 
         Force force = new Force();  //軍団インスタンス生成
         force.SetForceData(data);   //軍団情報をセット
+        force.SetRandomCommander(); //指揮官設定
         ForceList.Add(force);       //リストに追加
 
         Fund -= data.FundCost * data.Soldiers;          //資金消費
@@ -305,6 +343,8 @@ public class CountryData
 
         EnemyCountryList.Add(enemydata);        //この勢力の「戦争中の勢力リスト」に対象の勢力を加える
         enemydata.EnemyCountryList.Add(this);   //対象の勢力の「戦争中の勢力リスト」にこの勢力を加える
+
+        NotificationManager.Instance.InstanciateDeclareWarNotice(this, enemydata);  //宣戦布告通知を生成
     }
 
     /// <summary>
@@ -350,15 +390,34 @@ public class CountryData
     {
         //====================「兵力」に関する情報の更新===================
 
-        int currentAllSoldiers = 0;                         //現在の勢力の総兵数
+        int currentAllSoldiers = 0;                     //現在の勢力の総兵数
 
-        foreach (var force in AttackingForceGroupDict.Values.ToArray())
+        foreach (var force in AttackingForceGroupDict.Values.ToArray()) //攻撃部隊の処理
         {
-            currentAllSoldiers += force.AllSoldier;           //軍団ごとの値を入力
+            currentAllSoldiers += force.AllSoldier;     //軍団ごとの値を入力
 
             if (force.AttackingState != null)           //現在侵略中のステートがあれば
             {
-                force.GetListHead().Conquest();                //先頭の軍団に侵略を行わせる
+                force.GetListHead().Conquest();         //先頭の軍団に侵略を行わせる
+            }
+            else
+            {
+                force.SetInBattle(false);         //戦闘を行ったフラグを削除
+            }
+
+            if (!force.InBattle)                 //この時間に戦闘を行っていない
+            {
+                force.HealAllForces();                  //全部隊回復
+            }
+        }
+
+        foreach (var force in GuardingForceGroupDict.Values.ToArray())  //防御部隊の処理
+        {
+            currentAllSoldiers += force.AllSoldier;     //軍団ごとの値を入力
+
+            if (!force.InBattle)                 //この時間に戦闘を行っていない
+            {
+                force.HealAllForces();                  //全部隊回復
             }
         }
 
@@ -372,25 +431,72 @@ public class CountryData
     /// </summary>
     public void UpdateCountryDataOnDate()
     {
+        //====================「兵力」に関する情報の更新===================
+
+        foreach (var force in AttackingForceGroupDict.Values.ToArray()) //攻撃部隊の処理
+        {
+            var result = force.CheckBattleResultOnDate();   //前日の全戦闘の結果を出す
+
+            switch (result)    
+            {
+                case BattleResult.Win:                  //この一日は勝利
+                    force.GetListHead().HealMorale(10); //士気が10回復する
+                    break;
+                case BattleResult.Lose:                 //この一日は敗北
+                    force.GetListHead().Damaged10Per(); //10パーセントの兵数を失う
+                    break;
+                default:
+                    break;
+            }
+
+            if (WorldUIManager.Instance.ForceUIDict.ContainsKey(force) && (result == BattleResult.Win || result == BattleResult.Lose))  //nullチェック&勝ちか負けの時だけ
+            {
+                WorldUIManager.Instance.ForceUIDict[force].SetResultText(result);   //この軍団用のUI
+            }
+        }
+
+        foreach (var force in GuardingForceGroupDict.Values.ToArray())  //防御部隊の処理
+        {
+            var result = force.CheckBattleResultOnDate();   //前日の全戦闘の結果を出す
+
+            switch (result)    //前日の全戦闘の結果を出す
+            {
+                case BattleResult.Win:                  //この一日は勝利
+                    force.GetListHead().HealMorale(10); //士気が10回復する
+                    break;
+                case BattleResult.Lose:                 //この一日は敗北
+                    force.GetListHead().Damaged10Per(); //10パーセントの兵数を失う
+                    break;
+                default:
+                    break;
+            }
+
+            if (WorldUIManager.Instance.ForceUIDict.ContainsKey(force) && (result == BattleResult.Win || result == BattleResult.Lose))  //nullチェック&勝ちか負けの時だけ
+            {
+                WorldUIManager.Instance.ForceUIDict[force].SetResultText(result);   //この軍団用のUI
+            }
+        }
+
+        //====================「兵力」に関する情報の更新===================
+
+
+
+
         //====================「リソース」に関する情報の更新===================
 
-        var stateList = FieldManager.Instance.GetOwnedStateList(this);    //所有している州を取得
+        CalculateDateGDP();         //総出力を計算
 
-        foreach (var state in stateList)
+        Fund += AllIncome;
+        Resource += AllResource;
+
+        if (Fund > MaxFund)     //最大資金を越えると
         {
-            Fund += state.Income;   //収入を追加
+            Fund = MaxFund;     //最大資金と同じ量になる
+        }
 
-            if (Fund > MaxFund)     //最大資金を越えると
-            {
-                Fund = MaxFund;     //最大資金と同じ量になる
-            }
-
-            Resource += state.Resource; //資源を追加
-
-            if (Resource > MaxResource) //最大資源を越えると
-            {
-                Resource = MaxResource; //最大資源と同じ量になる
-            }
+        if (Resource > MaxResource) //最大資源を越えると
+        {
+            Resource = MaxResource; //最大資源と同じ量になる
         }
 
         if (OwnedPlayerData.IsPlayer)    //もしプレイヤー国家だったら
@@ -399,6 +505,8 @@ public class CountryData
         }
 
         //====================「リソース」に関する情報の更新End===================
+
+
 
 
         //====================「AI思考」の更新===================
@@ -548,17 +656,44 @@ public class CountryData
             return null;
         }
 
+        if (!RelateStateDict.ContainsKey(targetState))
+        {
+            return null;
+        }
+
         var attackingBaseList = new List<State>();  //この勢力がtargetStateに攻撃を行うラインがあるステートのリスト
 
         foreach (var prov in RelateStateDict[targetState])
         {
-            if (!attackingBaseList.Contains(prov.proviince.OwnedState)) //まだリストにはいっていない
+            if (!attackingBaseList.Contains(prov.province.OwnedState)) //まだリストにはいっていない
             {
-                attackingBaseList.Add(prov.proviince.OwnedState);       //リストに追加
+                attackingBaseList.Add(prov.province.OwnedState);       //リストに追加
             }
         }
 
         return attackingBaseList;   //返す
+    }
+
+    /// <summary>
+    /// この勢力が一日で取得する資金＆資源量を計算してAllIncomeとAllResourceに入れる
+    /// </summary>
+    public void CalculateDateGDP()
+    {
+        var stateList = FieldManager.Instance.GetOwnedStateList(this);    //所有している州を取得
+
+        AllIncome = 0;
+        AllResource = 0;
+
+        if (stateList == null)
+        {
+            return;
+        }
+
+        foreach (var state in stateList)
+        {
+            AllIncome += state.Income;   //収入を追加
+            AllResource += state.Resource; //資源を追加
+        }
     }
 }
 

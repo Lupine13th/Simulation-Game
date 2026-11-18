@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -12,7 +13,9 @@ public class ForceDataUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI m_DefenseText;
     [SerializeField] private TextMeshProUGUI m_PositionNameText;
     [SerializeField] private TextMeshProUGUI m_PositionConstantText;
+    [SerializeField] private List<TextMeshProUGUI> m_CommanderPowerTextList;
     [SerializeField] private Image m_CountryFlagImage;
+    [SerializeField] private Image m_CommanderPortraitImage;
     [SerializeField] private GameObject Buttons;
 
     public Force ForceData { get; private set; }
@@ -31,6 +34,33 @@ public class ForceDataUI : MonoBehaviour
         m_AttackText.SetText(force.AttackPower.ToString());
         m_DefenseText.SetText(force.DefensePower.ToString());
         m_CountryFlagImage.sprite = force.OwnerCountry.CountryFlag;
+        m_CommanderPortraitImage.sprite = force.Commander.Portrait;
+
+        m_CommanderPortraitImage.SetAllDirty();
+
+        for (int i = 0; i < m_CommanderPowerTextList.Count; i++)
+        {
+            switch (i)
+            {
+                case 0:
+                    m_CommanderPowerTextList[i].SetText(force.Commander.Attack.ToString());
+                    break;
+                case 1:
+                    m_CommanderPowerTextList[i].SetText(force.Commander.Defence.ToString());
+                    break;
+                case 2:
+                    m_CommanderPowerTextList[i].SetText(force.Commander.Logitics.ToString());
+                    break;
+                case 3:
+                    m_CommanderPowerTextList[i].SetText(force.Commander.Supply.ToString());
+                    break;
+            }
+        }
+
+        var button = GetComponent<CustomButton>();  //ボタンを取得
+
+        button.onHover.AddListener(() => WorldUIManager.Instance.ForceUIDict[force.BelongGroup].SetActiveArrowMark(true));      //マウスポインタが上にある時に大軍団のワールドUIの矢印をオン
+        button.onHoverExit.AddListener(() => WorldUIManager.Instance.ForceUIDict[force.BelongGroup].SetActiveArrowMark(false)); //マウスポインタが外れた時に大軍団のワールドUIの矢印をオフ
     }
 
     public void OpenEditButton()

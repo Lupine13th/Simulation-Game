@@ -17,6 +17,8 @@ public class ForcesMenu : TacticalMenu
     {
         UpdateForceUI(BattleSystemManager.Instance.SelectingCountry);   //軍隊メニューを更新
         CloseEnlistMenu();                                              //徴兵メニューを閉じる
+        BattleSystemManager.Instance.ResetOwnedAllStateColor(BattleSystemManager.Instance.SelectingCountry);                        //ステート色を一旦リセット
+        BattleSystemManager.Instance.SelectingState.SetStateColor(FieldManager.Instance.StateColorDict[StateColorType.Selecting]);  //選択ステートのみ色変更
     }
 
     /// <summary>
@@ -27,7 +29,7 @@ public class ForcesMenu : TacticalMenu
     {
         foreach (var force in country.ForceList)
         {
-            ForceDataUI currentForceObj = Instantiate(m_ForcePrehab, Vector3.zero, Quaternion.identity, m_ListContent);  //ListにForce情報が記入されたUIオブジェクトを配置していく
+            ForceDataUI currentForceObj = Instantiate(m_ForcePrehab, m_ListContent);  //ListにForce情報が記入されたUIオブジェクトを配置していく
             currentForceObj.SetForceDataUI(force);
             currentForceObj.RefreshPositionName();
             m_ForceUIList.Add(currentForceObj.gameObject);
@@ -52,26 +54,40 @@ public class ForcesMenu : TacticalMenu
     /// </summary>
     public void ChangeEditMenu()
     {
-        if (BattleSystemManager.Instance.CurrentEditState == EditState.None)    //編集モードになる前
+        var bsManager = BattleSystemManager.Instance;
+
+        if (bsManager.CurrentEditState == EditState.None)    //編集モードになる前
         {
             foreach (var UI in m_ForceUIList)
             {
                 UI.GetComponent<ForceDataUI>().OpenEditButton();                //編集ボタン出現
             }
 
-            BattleSystemManager.Instance.ChangeEditingState(EditState.Force);   //編集モードに移行
+            bsManager.ChangeEditingState(EditState.Force);   //編集モードに移行
         }
-        else if (BattleSystemManager.Instance.CurrentEditState == EditState.Force)  //編集モード後
+        else if (bsManager.CurrentEditState == EditState.Force)  //編集モード後
         {
             foreach (var UI in m_ForceUIList)
             {
                 UI.GetComponent<ForceDataUI>().CloseEditButton();               //編集ボタン消去
             }
 
-            BattleSystemManager.Instance.MenuDict[MenuType.Order].GetComponent<OrderMenu>().ClearButtonList();  //命令ボタンを全消去
-            BattleSystemManager.Instance.CloseOrderMenu();                      //命令メニュー消去
-            BattleSystemManager.Instance.SelectingState.SetStateColor(FieldManager.Instance.StateColorDict[StateColorType.Selecting]);      //編集モードになった際に変更したプロヴィンスの色を修正
-            BattleSystemManager.Instance.ChangeEditingState(EditState.None);    //編集モードオフ
+            bsManager.MenuDict[MenuType.Order].GetComponent<OrderMenu>().ClearButtonList();  //命令ボタンを全消去
+            bsManager.CloseOrderMenu();                      //命令メニュー消去
+
+            foreach (var state in FieldManager.Instance.GetOwnedStateList(bsManager.PlayerCountry).ToArray())
+            {
+                if (state == bsManager.SelectingState)   //選択中のステートの場合
+                {
+                    state.SetStateColor(FieldManager.Instance.StateColorDict[StateColorType.Selecting]);    //選択カラーに戻す
+                }
+                else
+                {
+                    state.SetStateColor(bsManager.PlayerCountry.CountryColor);           //国家カラーに戻す
+                }
+            }
+
+            bsManager.ChangeEditingState(EditState.None);    //編集モードオフ
         } 
     }
 
@@ -80,6 +96,8 @@ public class ForcesMenu : TacticalMenu
     /// </summary>
     public void ChangeEditMenu(bool on)
     {
+        var bsManager = BattleSystemManager.Instance;
+
         if (on)     //編集モード:オン
         {
             foreach (var UI in m_ForceUIList)
@@ -87,7 +105,7 @@ public class ForcesMenu : TacticalMenu
                 UI.GetComponent<ForceDataUI>().OpenEditButton();                //編集ボタン出現
             }
 
-            BattleSystemManager.Instance.ChangeEditingState(EditState.Force);   //編集モードに移行
+            bsManager.ChangeEditingState(EditState.Force);   //編集モードに移行
         }
         else if (!on)  //編集モード:オフ
         {
@@ -96,10 +114,22 @@ public class ForcesMenu : TacticalMenu
                 UI.GetComponent<ForceDataUI>().CloseEditButton();               //編集ボタン消去
             }
 
-            BattleSystemManager.Instance.MenuDict[MenuType.Order].GetComponent<OrderMenu>().ClearButtonList();  //命令ボタンを全消去
-            BattleSystemManager.Instance.CloseOrderMenu();                      //命令メニュー消去
-            BattleSystemManager.Instance.SelectingState.SetStateColor(FieldManager.Instance.StateColorDict[StateColorType.Selecting]);      //編集モードになった際に変更したプロヴィンスの色を修正
-            BattleSystemManager.Instance.ChangeEditingState(EditState.None);    //編集モードオフ
+            bsManager.MenuDict[MenuType.Order].GetComponent<OrderMenu>().ClearButtonList();  //命令ボタンを全消去
+            bsManager.CloseOrderMenu();                      //命令メニュー消去
+
+            foreach (var state in FieldManager.Instance.GetOwnedStateList(bsManager.PlayerCountry).ToArray())
+            {
+                if (state == bsManager.SelectingState)   //選択中のステートの場合
+                {
+                    state.SetStateColor(FieldManager.Instance.StateColorDict[StateColorType.Selecting]);    //選択カラーに戻す
+                }
+                else
+                {
+                    state.SetStateColor(bsManager.PlayerCountry.CountryColor);           //国家カラーに戻す
+                }
+            }
+
+            bsManager.ChangeEditingState(EditState.None);    //編集モードオフ
         }
     }
 

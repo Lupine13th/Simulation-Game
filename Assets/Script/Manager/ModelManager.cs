@@ -38,6 +38,7 @@ public class ModelManager : SingletonManager<ModelManager>
     /// </summary>
     /// <param name="on"></param>
     /// <param name="target">侵攻先のステート</param>
+    /// <param name="country">モデルを持っている勢力</param>
     public void ChangeBattleModel(bool on, State target, CountryData country, ForceGroup force)
     {
         switch (on)
@@ -46,21 +47,29 @@ public class ModelManager : SingletonManager<ModelManager>
                 if (!country.BattleModelDict.ContainsKey(target)) break;
                 if (country.BattleModelDict[target] == null) //ステート状のモデルがいない場合
                 {
-                    Vector3 borderMidPos = Vector3.zero;
+                    var borderMidPos = Vector3.zero;
+
+                    var targetPos = target.MidModelPos;
+
+                    var direction = Vector3.zero;
 
                     foreach (var prov in country.RelateStateDict[target]) //指定したステートの国境のプロヴィンスを取得
                     {
-                        borderMidPos += prov.proviince.transform.position;
+                        borderMidPos += prov.province.transform.position;
                     }
 
                     borderMidPos = borderMidPos / country.RelateStateDict[target].Count;  //平均値を取って国境の中央座標を取得
 
-                    GameObject model = Instantiate(BattleSystemManager.Instance.SoldierPrefab, borderMidPos, Quaternion.identity, transform); //モデル生成
+                    direction = targetPos - borderMidPos;   //侵攻モデルの位置とステートの中心地の差分ベクトル
+
+                    GameObject model = Instantiate(BattleSystemManager.Instance.SoldierPrefab, borderMidPos, Quaternion.LookRotation(direction), transform); //モデル生成
 
                     country.SetBattleModel(model, target);
 
                     Animator anim = country.BattleModelDict[target].GetComponentInChildren<Animator>();     //Animator取得
                     anim.Play(AddressableManager.Instance.AnimationAddress[AnimationType.Fire]);    //アイドル状態              //TODO:Animatorはややこしいので一旦スルー
+
+                    
 
                     WorldUIManager.Instance.InstantiateForceUI(force, model);   //モデル追従用のUIを生成
                 }

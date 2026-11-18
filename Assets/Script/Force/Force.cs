@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public enum ForceType
@@ -59,6 +60,7 @@ public class Force
     public CountryData OwnerCountry { get; private set; }
     public float MoveSpeed { get; private set; } = 1;
     public ForceDataUI LinkedUI { get; private set; } = null;
+    public CommanderData Commander { get; private set; } = null;
 
     /// <summary>
     /// 所属している軍団
@@ -122,6 +124,8 @@ public class Force
     public void Conquest()
     {
         var targetCountry = CurrentTargetState.OwnedCountry;
+
+        DamagedMorale(1);
 
         if (targetCountry != null)    //ターゲットのステートがどこかの勢力に所有されていれば
         {
@@ -200,43 +204,91 @@ public class Force
     /// <param name="type"></param>
     public void CalculateBattle(BattleType type, Force enemyForce)
     {
-        int thisForceDice = Random.Range(1, 10);    //こちらの部隊用の乱数
-        int enemyForceDice = Random.Range(1, 10);   //敵部隊用の乱数
-        int ownDamage = 0;
-        int enemyDamage = 0;
+        int thisForceDice = Random.Range(Commander.Attack, 10 + Commander.Attack);    //こちらの部隊用の乱数
+        int thisForceDefenceDice = Random.Range(Commander.Defence, 10 + Commander.Defence);   //敵部隊用の乱数
+        int enemyForceDice = Random.Range(enemyForce.Commander.Attack, 10 + enemyForce.Commander.Attack);   //敵部隊用の乱数
+        int enemyForceDefenceDice = Random.Range(enemyForce.Commander.Defence, 10 + enemyForce.Commander.Defence);   //敵部隊用の乱数
+        float ownDamage = 0;
+        float enemyDamage = 0;
+
+        float thisSoldiersCorrection = 1.0f + BelongGroup.AllSoldier / 500f;
+        float enemySoldiersCorrection = 1.0f + enemyForce.BelongGroup.AllSoldier / 500f;
 
         switch (type)
         {
             case BattleType.Encounter:  //遭遇戦(お互い攻撃中)
 
-                ownDamage += enemyForce.AttackPower * enemyForceDice;   //この軍団がくらうダメージ
+                ownDamage += enemyForce.AttackPower * enemyForceDice - DefensePower * thisForceDefenceDice;         //この軍団がくらうダメージ
+                enemyDamage += AttackPower * thisForceDice - enemyForce.DefensePower * enemyForceDefenceDice;       //敵軍団がくらうダメージ
 
-                enemyDamage += AttackPower * thisForceDice;             //敵軍団がくらうダメージ
+                ownDamage *= enemySoldiersCorrection;   //軍量による補正値
+                enemyDamage *= thisSoldiersCorrection;  //軍量による補正値
 
-                ownDamage /= 10;
-                enemyDamage /= 10;
+                ownDamage /= 5;
+                enemyDamage /= 5;
+
+                if (ownDamage < 0)
+                {
+                    ownDamage = 0;
+                }
+
+                if (enemyDamage < 0)
+                {
+                    enemyDamage = 0;
+                }
 
                 break;
             case BattleType.Offensive:  //攻略戦(この軍団が駐屯中の部隊に攻撃中)
 
-                ownDamage += enemyForce.AttackPower + enemyForce.DefensePower * enemyForceDice; //この軍団がくらうダメージ
+                ownDamage += enemyForce.AttackPower * enemyForceDice - DefensePower * thisForceDefenceDice;     //この軍団がくらうダメージ
+                enemyDamage += AttackPower * thisForceDice - enemyForce.DefensePower * enemyForceDefenceDice;       //敵軍団がくらうダメージ
+                                                                                                                    //
+                ownDamage *= enemySoldiersCorrection;   //軍量による補正値
+                enemyDamage *= thisSoldiersCorrection;  //軍量による補正値
 
-                enemyDamage += AttackPower * thisForceDice;             //敵軍団がくらうダメージ
+                ownDamage /= 5;
+                enemyDamage /= 5;
 
-                ownDamage /= 10;
-                enemyDamage /= 10;
+                if (ownDamage < 0)
+                {
+                    ownDamage = 0;
+                }
+
+                if (enemyDamage < 0)
+                {
+                    enemyDamage = 0;
+                }
 
                 break;
         }
 
-        Damaged(ownDamage);
-        enemyForce.Damaged(enemyDamage);
+        Damaged((int)ownDamage);
+        enemyForce.Damaged((int)enemyDamage);
 
         Debug.Log(ForcesName + "へ" + ownDamage +"ダメージ　　　　　" + enemyForce.ForcesName + "へ" + enemyDamage + "ダメージ");
+
+        if (thisForceDice > enemyForceDice)
+        {
+            BelongGroup.AddBattleResult(BattleResult.Win);              //この部隊は勝利
+            enemyForce.BelongGroup.AddBattleResult(BattleResult.Lose);  //相手部隊は敗北
+        }
+        else if (thisForceDice < enemyForceDice)
+        {
+            BelongGroup.AddBattleResult(BattleResult.Lose);             //この部隊は敗北
+            enemyForce.BelongGroup.AddBattleResult(BattleResult.Win);   //相手部隊は勝利
+        }
+        else
+        {
+            BelongGroup.AddBattleResult(BattleResult.Draw);             //この部隊は引き分け
+            enemyForce.BelongGroup.AddBattleResult(BattleResult.Draw);  //相手部隊は引き分け
+        }
+
+        BelongGroup.SetInBattle(true);
+        enemyForce.BelongGroup.SetInBattle(true);
     }
 
     /// <summary>
-    /// 軍団にダメージ(兵数減少)
+    /// 軍団にダメージ(指定した値)
     /// </summary>
     /// <param name="damage"></param>
     public void Damaged(int damage)
@@ -253,5 +305,74 @@ public class Force
                 
             OwnerCountry.ForceList.Remove(this);            //勢力のリストからも削除
         }
+    }
+
+    /// <summary>
+    /// 軍団にダメージ(10パーセント)
+    /// </summary>
+    /// <param name="damage"></param>
+    public void Damaged10Per()
+    {
+        Soldiers -= MaxSoldiers / 10;
+
+        if (Soldiers <= 0)
+        {
+            Debug.Log(OwnerCountry.CountryName + "の軍団が壊滅しました");
+
+            BelongGroup.UpdateDatas();  //大軍団の情報更新
+
+            BelongGroup.RemoveForce(this);
+                
+            OwnerCountry.ForceList.Remove(this);            //勢力のリストからも削除
+        }
+    }
+
+    /// <summary>
+    /// 軍団を回復(1/100)
+    /// </summary>
+    public void HealSoldier1Per()
+    {
+        Soldiers += MaxSoldiers / 100;
+
+        if (Soldiers > MaxSoldiers)
+        {
+            Soldiers = MaxSoldiers;
+        }
+    }
+
+    /// <summary>
+    /// 軍団の士気を消耗(値)
+    /// </summary>
+    public void DamagedMorale(int value)
+    {
+        Morale -= value;
+
+        if (Morale < 0)
+        {
+            Morale = 0;
+        }
+    }
+
+    /// <summary>
+    /// 軍団の士気を回復(値)
+    /// </summary>
+    public void HealMorale(int value)
+    {
+        Morale += value;
+
+        if (Morale > MaxMorale)
+        {
+            Morale = MaxMorale;
+        }
+    }
+
+    /// <summary>
+    /// ランダムな指揮官をセット
+    /// </summary>
+    public async Task SetRandomCommander()
+    {
+        Commander = new CommanderData();                                //指揮官データ作成
+        Commander.Init();                                               //ステータス決定
+        Commander.SetPortrait(OwnerCountry.GetRandomCommander());       //ランダムなポートレートを割り当て
     }
 }

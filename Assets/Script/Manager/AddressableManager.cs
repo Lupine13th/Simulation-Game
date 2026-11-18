@@ -57,6 +57,17 @@ public class AddressableManager : SingletonManager<AddressableManager>
         {AnimationType.Fire, "RifleFire"},
     };
 
+    public Dictionary<SEType, string> SEAudioClipAddress { get; private set; } = new Dictionary<SEType, string>()
+    {
+        {SEType.Chaim, "ClockChimeSE"},
+    };
+
+    public Dictionary<BGMType, string> BGMAudioClipAddress { get; private set; } = new Dictionary<BGMType, string>()
+    {
+        {BGMType.Timer, "ClockHandBGM"},
+        {BGMType.Main_Peace, "PeaceBGM"},
+    };
+
     public void ParseCsvIdeologyType(string csv, Dictionary<LIdeology, List<string>> ideologyTextList)   //CSVデータを行ごとに並び替え(引数２は状況に応じて変わるため必要)
     {
         using (StringReader reader = new StringReader(csv))
@@ -261,6 +272,23 @@ public class AddressableManager : SingletonManager<AddressableManager>
             Sprite textureSprite = Sprite.Create(handle.Result, rect, pivot);
 
             return textureSprite;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    ///<summary>
+    ///アドレスからAudioClipを取得
+    /// </summary>
+    public async Task<AudioClip> LoadAudioClipAsync(string address)  
+    {
+        var handle = Addressables.LoadAssetAsync<AudioClip>(address);
+        await handle.Task;
+        if (handle.Result != null)
+        {
+            return handle.Result;
         }
         else
         {

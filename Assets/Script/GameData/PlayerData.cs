@@ -188,7 +188,7 @@ public class PlayerData : MonoBehaviour
         switch (MostValuableAction())
         {
             case AIActionType.Enlist:   //最も有効な行動が「徴兵」ならば
-                if (CountryData.Fund > 2000 && CountryData.Resource > 1000)
+                if (CountryData.Fund > 4000 && CountryData.Resource > 2000)
                 {
                     int soldiers = 1000;
 
@@ -218,7 +218,10 @@ public class PlayerData : MonoBehaviour
 
                     if (randForce != null)
                     {
-                        fieldManager.SetForceOnBorder(bestAttackState, randForce);   //選択したステートに軍団を割り当て
+                        if (bestAttackState.OccupiedCountry == null)
+                        {
+                            fieldManager.SetForceOnBorder(bestAttackState, randForce);   //選択したステートに軍団を割り当て
+                        }
                     }
 
                     break;

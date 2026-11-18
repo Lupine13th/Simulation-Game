@@ -36,6 +36,11 @@ public class Province : MonoBehaviour
 
     public State OwnedState { get; private set; }
 
+    /// <summary>
+    /// 編集モード中に何の色になっているか(デフォルトはSelecting)
+    /// </summary>
+    public StateColorType CurrentColorInEditMode { get; private set; } = StateColorType.Selecting;
+
     public bool IsBorderProvince => m_IsBorderProvince;
     public bool OutSideProvince => m_OutSideProvince;
     public Vector2Int ProvincePosition => m_ProvincePosition;
@@ -71,6 +76,24 @@ public class Province : MonoBehaviour
     /// <param name="color"></param>
     public void SetProvinceColor(Vector3 color)
     {
+        MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+        MeshRenderer meshRenderer = this.GetComponent<MeshRenderer>();
+
+        meshRenderer.GetPropertyBlock(propertyBlock);
+        propertyBlock.SetColor("_BaseColor", new Color(color.x, color.y, color.z));
+
+        meshRenderer.SetPropertyBlock(propertyBlock);
+    }
+
+    /// <summary>
+    /// このプロヴィンスの色を変更(編集モード用)
+    /// </summary>
+    /// <param name="color"></param>
+    public void SetProvinceColorInEditMode(StateColorType colorType)
+    {
+        var color = FieldManager.Instance.StateColorDict[colorType];        //フィールドマネージャから編集モード中の色を取得
+        CurrentColorInEditMode = colorType;                                 //色のタイプも変更
+
         MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
         MeshRenderer meshRenderer = this.GetComponent<MeshRenderer>();
 
@@ -174,6 +197,34 @@ public class Province : MonoBehaviour
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// このプロヴィンスの隣のステートが自勢力以外か
+    /// </summary>
+    /// <returns></returns>
+    public bool ThisProvincesNeighborIsEnemyState()
+    {
+        for (int i = 0; i < (int)Direction.Count; i++)              //このプロヴィンスの全方向
+        {
+            var nState = GetNeighborProvinceState((Direction)i);    //現在の方向の隣接ステートを取得
+            if (nState != null)                                     //隣のステート
+            {
+                if (nState.OwnedCountry != null)                    //隣のステートが誰かに所有されている
+                {
+                    if (nState.OwnedCountry != OwnedState.OwnedCountry && nState.OwnedCountry.EnemyCountryList.Contains(OwnedState.OwnedCountry))   //隣接しているプロヴィンスが別勢力&敵対している
+                    {
+                        return true;    //敵ステート認定
+                    }
+                }
+                else                                                //所有されていない＝空ステート
+                {
+                    return true;        //敵ステート(空ステート)認定
+                }
+            }
+        }
+
+        return false;                                               //もし一回も引っ掛からなかったら敵と隣接していない
     }
 
     /// <summary>

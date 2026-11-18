@@ -10,10 +10,14 @@ public class WorldSpaceUI_State : MonoBehaviour
     [Header("UI背景")]
     [SerializeField] private Image m_BackGround;
 
+    [Header("プレイヤー用のマーカー")]
+    [SerializeField] private Image m_PlayerMarker;
+
     [Header("ステート名")]
     [SerializeField] private TextMeshProUGUI m_StateNameText;
 
     public Image FlagImage => m_FlagImage;
     public Image BackGround => m_BackGround;
+    public Image PlayerMarker => m_PlayerMarker;
     public TextMeshProUGUI StateNameText => m_StateNameText;
 }
