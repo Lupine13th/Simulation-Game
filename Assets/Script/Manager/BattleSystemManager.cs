@@ -6,6 +6,10 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 public enum MenuType
 { 
     None,
@@ -36,7 +40,6 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     
     [SerializeField] private Camera m_MainCamera;
     [SerializeField] private GameObject m_TacticalMenu;
-    [SerializeField] private GameObject m_YouArePlayerUI;
 
     [SerializeField] private GameObject m_SoldierPrefab;  //兵士のプレファブ
 
@@ -46,9 +49,11 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
 
     [SerializeField] private List<GameObject> m_LabelList = new List<GameObject>();
 
-    [SerializeField] private TimeCounterUI m_TimeCounter;
+    [SerializeField] private TimeCounterUI m_TimeCounterUI;
 
     [SerializeField] private InventryUI m_InventryUI;
+
+    [SerializeField] private AudioSource m_MainBGMPlayer;
 
     [Header("")]
     [SerializeField] private ResultUI m_ResultUI;
@@ -66,6 +71,8 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     public GameObject SoldierPrefab => m_SoldierPrefab;
 
     public InventryUI InventryUI => m_InventryUI;
+
+    public TimeCounterUI TimeCounterUI => m_TimeCounterUI;
 
     public State SelectingState { get; private set; }
     public Force CurrentEditingForce { get; private set; }
@@ -121,7 +128,10 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         }
 
         FieldManager.Instance.StopTimeCount();
-        m_TimeCounter.ChangeTimeImage(false);
+        m_TimeCounterUI.ChangeTimeImage(false);
+
+        AudioManager.Instance.AddBGMAudioSource(BGMType.Main, m_MainBGMPlayer); //メインBGMを再生
+        AudioManager.Instance.PlayBGM(BGMType.Main, await AddressableManager.Instance.LoadAudioClipAsync(AddressableManager.Instance.BGMAudioClipAddress[BGMType.Main_Peace])); //メインBGMを再生
     }
 
     void Update()
@@ -129,6 +139,11 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         if (Input.GetKeyDown(KeyCode.F1))
         {
             SceneManager.LoadScene("SampleScene");
+        }
+
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            EditorApplication.isPaused = !EditorApplication.isPaused;
         }
 
         if (Input.GetKeyDown(KeyCode.Tab))    //TAB入力
@@ -142,11 +157,11 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
             {
                 case true:
                     FieldManager.Instance.StopTimeCount();
-                    m_TimeCounter.ChangeTimeImage(false);
+                    m_TimeCounterUI.ChangeTimeImage(false);
                     break;
                 case false:
                     FieldManager.Instance.PlayTimeCount();
-                    m_TimeCounter.ChangeTimeImage(true);
+                    m_TimeCounterUI.ChangeTimeImage(true);
                     break;
             }
         }
@@ -452,15 +467,6 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     public void OpenTacticalMenu()
     {
         m_TacticalMenu.gameObject.SetActive(true);
-
-        if (SelectingCountry == PlayerCountry)
-        {
-            m_YouArePlayerUI.SetActive(true);
-        }
-        else
-        {
-            m_YouArePlayerUI.SetActive(false);
-        }
     }
 
     /// <summary>
@@ -481,15 +487,6 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         m_TacticalMenu.gameObject.SetActive(true);  //戦術メニューのベースを開く
 
         ResetAllMenu();                             //メニューを一旦全部閉じる
-
-        if (SelectingCountry == PlayerCountry)      
-        {
-            m_YouArePlayerUI.SetActive(true);
-        }
-        else
-        {
-            m_YouArePlayerUI.SetActive(false);
-        }
 
         MenuDict[menu].gameObject.SetActive(true);  //対象のメニューを展開
 
@@ -784,6 +781,11 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     {
         var states = FieldManager.Instance.GetOwnedStateList(country);
 
+        if (states == null || states.Count <= 0)
+        {
+            return;
+        }
+
         foreach (var state in states)
         {
             state.SetStateColor(country.CountryColor);
@@ -842,13 +844,13 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     public void GameOver(bool win)
     {
         FieldManager.Instance.StopTimeCount();  //シミュレーション終了
-        m_TimeCounter.ChangeTimeImage(false);   //一応、UIも変更
+        m_TimeCounterUI.ChangeTimeImage(false);   //一応、UIも変更
 
         var player = PlayerCountry;
 
         m_ResultUI.gameObject.SetActive(true);  //リザルト画面を表示
 
-        m_ResultUI.SetTextAndFlag(player.CountryFlag, player.StateGetCount, player.CountryKillCount, player.DeathCount, FieldManager.Instance.TimeText.text);   //
+        m_ResultUI.SetTextAndFlag(player.CountryFlag, player.StateGetCount, player.CountryKillCount, player.DeathCount, TimeCounterUI.TimerText.text);   //
     }
 }
 

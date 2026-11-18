@@ -36,7 +36,17 @@ public class ForceGroup
     /// </summary>
     public int AllSoldier { get; private set; }
 
-    public bool BattleCompleted { get; private set; } = false;
+    /// <summary>
+    /// 戦闘を行っていないカウント(1時間ごとに1増加)
+    /// </summary>
+    public int NotBattleCount { get; private set; }
+
+    /// <summary>
+    /// この時間ぶん戦闘が起きなければ回復が始まる
+    /// </summary>
+    public const int MaxNotBattleCount = 3;
+
+    public bool InBattle { get; private set; } = false;
 
     public void UpdateDatas()
     {
@@ -144,9 +154,9 @@ public class ForceGroup
     /// <summary>
     /// 戦闘を行ったフラグを変更
     /// </summary>
-    public void SetBattleComplete(bool on)
+    public void SetInBattle(bool on)
     {
-        BattleCompleted = on;
+        InBattle = on;
     }
 
     /// <summary>

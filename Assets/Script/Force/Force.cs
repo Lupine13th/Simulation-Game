@@ -205,36 +205,65 @@ public class Force
     public void CalculateBattle(BattleType type, Force enemyForce)
     {
         int thisForceDice = Random.Range(Commander.Attack, 10 + Commander.Attack);    //こちらの部隊用の乱数
+        int thisForceDefenceDice = Random.Range(Commander.Defence, 10 + Commander.Defence);   //敵部隊用の乱数
         int enemyForceDice = Random.Range(enemyForce.Commander.Attack, 10 + enemyForce.Commander.Attack);   //敵部隊用の乱数
-        int ownDamage = 0;
-        int enemyDamage = 0;
+        int enemyForceDefenceDice = Random.Range(enemyForce.Commander.Defence, 10 + enemyForce.Commander.Defence);   //敵部隊用の乱数
+        float ownDamage = 0;
+        float enemyDamage = 0;
+
+        float thisSoldiersCorrection = 1.0f + BelongGroup.AllSoldier / 500f;
+        float enemySoldiersCorrection = 1.0f + enemyForce.BelongGroup.AllSoldier / 500f;
 
         switch (type)
         {
             case BattleType.Encounter:  //遭遇戦(お互い攻撃中)
 
-                ownDamage += enemyForce.AttackPower * enemyForceDice;   //この軍団がくらうダメージ
+                ownDamage += enemyForce.AttackPower * enemyForceDice - DefensePower * thisForceDefenceDice;         //この軍団がくらうダメージ
+                enemyDamage += AttackPower * thisForceDice - enemyForce.DefensePower * enemyForceDefenceDice;       //敵軍団がくらうダメージ
 
-                enemyDamage += AttackPower * thisForceDice;             //敵軍団がくらうダメージ
+                ownDamage *= enemySoldiersCorrection;   //軍量による補正値
+                enemyDamage *= thisSoldiersCorrection;  //軍量による補正値
 
                 ownDamage /= 5;
                 enemyDamage /= 5;
+
+                if (ownDamage < 0)
+                {
+                    ownDamage = 0;
+                }
+
+                if (enemyDamage < 0)
+                {
+                    enemyDamage = 0;
+                }
 
                 break;
             case BattleType.Offensive:  //攻略戦(この軍団が駐屯中の部隊に攻撃中)
 
-                ownDamage += (enemyForce.AttackPower + enemyForce.DefensePower) * enemyForceDice; //この軍団がくらうダメージ
-
-                enemyDamage += AttackPower * thisForceDice;             //敵軍団がくらうダメージ
+                ownDamage += enemyForce.AttackPower * enemyForceDice - DefensePower * thisForceDefenceDice;     //この軍団がくらうダメージ
+                enemyDamage += AttackPower * thisForceDice - enemyForce.DefensePower * enemyForceDefenceDice;       //敵軍団がくらうダメージ
+                                                                                                                    //
+                ownDamage *= enemySoldiersCorrection;   //軍量による補正値
+                enemyDamage *= thisSoldiersCorrection;  //軍量による補正値
 
                 ownDamage /= 5;
                 enemyDamage /= 5;
 
+                if (ownDamage < 0)
+                {
+                    ownDamage = 0;
+                }
+
+                if (enemyDamage < 0)
+                {
+                    enemyDamage = 0;
+                }
+
                 break;
         }
 
-        Damaged(ownDamage);
-        enemyForce.Damaged(enemyDamage);
+        Damaged((int)ownDamage);
+        enemyForce.Damaged((int)enemyDamage);
 
         Debug.Log(ForcesName + "へ" + ownDamage +"ダメージ　　　　　" + enemyForce.ForcesName + "へ" + enemyDamage + "ダメージ");
 
@@ -253,6 +282,9 @@ public class Force
             BelongGroup.AddBattleResult(BattleResult.Draw);             //この部隊は引き分け
             enemyForce.BelongGroup.AddBattleResult(BattleResult.Draw);  //相手部隊は引き分け
         }
+
+        BelongGroup.SetInBattle(true);
+        enemyForce.BelongGroup.SetInBattle(true);
     }
 
     /// <summary>

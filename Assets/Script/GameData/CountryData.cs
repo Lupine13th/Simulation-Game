@@ -24,12 +24,12 @@ public class CountryData
     /// <summary>
     /// 最大総資金
     /// </summary>
-    public int MaxFund { get; private set; } = 10000;
+    public int MaxFund { get; private set; } = 100000;
 
     /// <summary>
     /// 現在の総資金
     /// </summary>
-    public int Fund { get; private set; } = 5000;
+    public int Fund { get; private set; } = 10000;
 
     /// <summary>
     /// 総収入
@@ -39,12 +39,12 @@ public class CountryData
     /// <summary>
     /// 最大総資源
     /// </summary>
-    public int MaxResource {  get; private set; } = 10000;
+    public int MaxResource {  get; private set; } = 100000;
 
     /// <summary>
     /// 現在の総資源
     /// </summary>
-    public int Resource {  get; private set; } = 5000;
+    public int Resource {  get; private set; } = 10000;
 
     /// <summary>
     /// 総資源採掘量
@@ -399,10 +399,13 @@ public class CountryData
             if (force.AttackingState != null)           //現在侵略中のステートがあれば
             {
                 force.GetListHead().Conquest();         //先頭の軍団に侵略を行わせる
-                force.SetBattleComplete(true);          //戦闘を行ったフラグを建てる
+            }
+            else
+            {
+                force.SetInBattle(false);         //戦闘を行ったフラグを削除
             }
 
-            if (!force.BattleCompleted)                 //この時間に戦闘を行っていない
+            if (!force.InBattle)                 //この時間に戦闘を行っていない
             {
                 force.HealAllForces();                  //全部隊回復
             }
@@ -412,7 +415,7 @@ public class CountryData
         {
             currentAllSoldiers += force.AllSoldier;     //軍団ごとの値を入力
 
-            if (!force.BattleCompleted)                 //この時間に戦闘を行っていない
+            if (!force.InBattle)                 //この時間に戦闘を行っていない
             {
                 force.HealAllForces();                  //全部隊回復
             }

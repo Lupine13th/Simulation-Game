@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using static Province;
@@ -80,8 +81,6 @@ public class FieldManager : SingletonManager<FieldManager>
     [Header("生成される勢力数(調整用)")]
     [SerializeField] private int m_CountryCount;
 
-    [SerializeField] private TextMeshProUGUI m_TimeText;
-
     public List<State> StateList => m_StateList;
 
     public List<string> UsedFlagID { get; private set; } = new List<string>(); //そのイデオロギーの国家のカウント
@@ -139,11 +138,10 @@ public class FieldManager : SingletonManager<FieldManager>
 
     public bool IsPlaying { get; private set; } = false;
 
-    public TextMeshProUGUI TimeText => m_TimeText;
 
     async void Start()
     {
-        m_TimeText.SetText(FieldTime[TimeType.Hour].ToString() + ". " + FieldTime[TimeType.Day].ToString() + ". " + FieldTime[TimeType.Month].ToString() + ". " + FieldTime[TimeType.Year].ToString());
+        BattleSystemManager.Instance.TimeCounterUI.TimerText.SetText(FieldTime[TimeType.Hour].ToString() + ". " + FieldTime[TimeType.Day].ToString() + ". " + FieldTime[TimeType.Month].ToString() + ". " + FieldTime[TimeType.Year].ToString());
 
         //=====================ステート生成フェーズ====================
         List<int> instancedId = new List<int>();
@@ -207,30 +205,34 @@ public class FieldManager : SingletonManager<FieldManager>
 
             PlayerData playerData = Instantiate(m_PlayerDataPrefab, m_PlayerDataListParent);    //プレイヤー生成
 
-            if (i == 0)
-            {
-                playerData.SetPlayer(true, i);  //インデックス1番にプレイヤーを当てはめる
-
-                country.SetInventryUI();        //プレイヤー国家のデータをUIに反映
-            }
-            else
-            {
-                playerData.SetPlayer(false, i); //それ以外はAI
-            }
-
             playerData.SetCountryData(country);     //プレイヤーに国家データを持たせる
             country.SetPlayerData(playerData);      //国家にもプレイヤーを参照できるように
 
             CountryDictPlayerKey.Add(playerData, country);  //辞書型に登録
 
             await country.SetCountryData();     //csvデータから国家のデータを登録
+
+            if (i == 0)
+            {
+                playerData.SetPlayer(true, i);  //インデックス1番にプレイヤーを当てはめる
+
+                BattleSystemManager.Instance.SetPlayerCountry(country);  //初代インデックスにプレイヤーを入れる
+
+                country.SetInventryUI();
+                BattleSystemManager.Instance.InventryUI.Init(); //プレイヤー国家のデータをUIに反映
+            }
+            else
+            {
+                playerData.SetPlayer(false, i); //それ以外はAI
+            }
         }
 
-        BattleSystemManager.Instance.SetPlayerCountry(CountryList[0]);  //初代インデックスにプレイヤーを入れる
         //=====================国家生成フェーズEnd=================
 
         //ステートUIの初期化
         WorldUIManager.Instance.Init();
+
+        BattleSystemManager.Instance.TimeCounterUI.UpdateGage(FieldTime[TimeType.Hour]);    //タイマーのゲージを更新
     }
 
     void Update()
@@ -345,7 +347,7 @@ public class FieldManager : SingletonManager<FieldManager>
     /// <summary>
     /// 戦場を更新する(ゲーム内で言うと一時間ごとに更新)
     /// </summary>
-    private void UpdateBattleField()
+    private async Task UpdateBattleField()
     {
         TimeCount++;                        //時間カウント(おそらくイベントのカウントとかで使う用)
 
@@ -373,6 +375,8 @@ public class FieldManager : SingletonManager<FieldManager>
             {
                 country.UpdateCountryDataOnDate();//国家ごとの情報更新(日毎)
             }
+
+            AudioManager.Instance.PlaySE(SEType.Chaim, await AddressableManager.Instance.LoadAudioClipAsync(AddressableManager.Instance.SEAudioClipAddress[SEType.Chaim]));
         }
 
         if (FieldTime[TimeType.Day] >= 31)  //31日以降になると
@@ -388,7 +392,8 @@ public class FieldManager : SingletonManager<FieldManager>
         }
 
         //行進した時間をテキストにセット
-        m_TimeText.SetText(FieldTime[TimeType.Hour].ToString() + ". " + FieldTime[TimeType.Day].ToString() + ". " + FieldTime[TimeType.Month].ToString() + ". " + FieldTime[TimeType.Year].ToString()); 
+        BattleSystemManager.Instance.TimeCounterUI.TimerText.SetText(FieldTime[TimeType.Hour].ToString() + ". " + FieldTime[TimeType.Day].ToString() + ". " + FieldTime[TimeType.Month].ToString() + ". " + FieldTime[TimeType.Year].ToString());
+        BattleSystemManager.Instance.TimeCounterUI.UpdateGage(FieldTime[TimeType.Hour]);    //タイマーのゲージを更新
     }
 
     public CountryData GetCountryFromPlayer(PlayerData player)
@@ -406,14 +411,29 @@ public class FieldManager : SingletonManager<FieldManager>
         return CountryDictPlayerKey.FirstOrDefault(pair => pair.Value == country).Key;  //見つからない場合は型に応じたデフォルト値（null）が返る
     }
 
-    public void PlayTimeCount()
+    public async Task PlayTimeCount()
     {
         IsPlaying = true;
+        AudioManager.Instance.PlayBGM(BGMType.Timer, await AddressableManager.Instance.LoadAudioClipAsync(AddressableManager.Instance.BGMAudioClipAddress[BGMType.Timer]));
     }
 
     public void StopTimeCount()
     {
         IsPlaying = false;
+        AudioManager.Instance.StopBGM(BGMType.Timer);
+    }
+
+    public void ChangeTimePlaying()
+    {
+        switch (IsPlaying)
+        {
+            case false:
+                PlayTimeCount();
+                break;
+            case true:
+                StopTimeCount();
+                break;
+        }
     }
 
     /// <summary>
@@ -560,7 +580,7 @@ public class FieldManager : SingletonManager<FieldManager>
             BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
         }
 
-        
+        WorldUIManager.Instance.UpdateForceUI();    //軍団情報更新
     }
 
     /// <summary>
@@ -637,12 +657,14 @@ public class FieldManager : SingletonManager<FieldManager>
             force.SetBelongGroup(country.GuardingForceGroupDict[state]);            //軍団側に大軍団ポインタを与える
         }
 
+        //===========モデルに関する処理==========
+
         if (BattleSystemManager.Instance.PlayerCountry == force.OwnerCountry)
         {
             BattleSystemManager.Instance.MenuDict[MenuType.Forces].GetComponent<ForcesMenu>().ChangeEditMenu(false); //メニューを閉じる
         }
 
-        //===========モデルに関する処理==========
+        WorldUIManager.Instance.UpdateForceUI();    //軍団情報更新
     }
 
     /// <summary>

@@ -29,7 +29,7 @@ public class ForcesMenu : TacticalMenu
     {
         foreach (var force in country.ForceList)
         {
-            ForceDataUI currentForceObj = Instantiate(m_ForcePrehab, Vector3.zero, Quaternion.identity, m_ListContent);  //ListにForce情報が記入されたUIオブジェクトを配置していく
+            ForceDataUI currentForceObj = Instantiate(m_ForcePrehab, m_ListContent);  //ListにForce情報が記入されたUIオブジェクトを配置していく
             currentForceObj.SetForceDataUI(force);
             currentForceObj.RefreshPositionName();
             m_ForceUIList.Add(currentForceObj.gameObject);
