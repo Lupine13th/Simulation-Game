@@ -305,6 +305,8 @@ public class Force
                 
             OwnerCountry.ForceList.Remove(this);            //¨—Í‚ÌƒŠƒXƒg‚©‚ç‚àíœ
         }
+
+        OwnerCountry.AddDeathCount(damage);
     }
 
     /// <summary>
@@ -313,7 +315,7 @@ public class Force
     /// <param name="damage"></param>
     public void Damaged10Per()
     {
-        Soldiers -= MaxSoldiers / 10;
+        Damaged(MaxSoldiers / 10);
 
         if (Soldiers <= 0)
         {

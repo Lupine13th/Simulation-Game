@@ -376,7 +376,7 @@ public class FieldManager : SingletonManager<FieldManager>
                 country.UpdateCountryDataOnDate();//国家ごとの情報更新(日毎)
             }
 
-            AudioManager.Instance.PlaySE(SEType.Chaim, await AddressableManager.Instance.LoadAudioClipAsync(AddressableManager.Instance.SEAudioClipAddress[SEType.Chaim]));
+            AudioManager.Instance.PlaySE(SEType.Chime, SEType.Chime);
         }
 
         if (FieldTime[TimeType.Day] >= 31)  //31日以降になると
@@ -411,10 +411,10 @@ public class FieldManager : SingletonManager<FieldManager>
         return CountryDictPlayerKey.FirstOrDefault(pair => pair.Value == country).Key;  //見つからない場合は型に応じたデフォルト値（null）が返る
     }
 
-    public async Task PlayTimeCount()
+    public void PlayTimeCount()
     {
         IsPlaying = true;
-        AudioManager.Instance.PlayBGM(BGMType.Timer, await AddressableManager.Instance.LoadAudioClipAsync(AddressableManager.Instance.BGMAudioClipAddress[BGMType.Timer]));
+        AudioManager.Instance.PlayBGM(BGMType.Timer, BGMType.Timer);
     }
 
     public void StopTimeCount()
@@ -692,16 +692,7 @@ public class FieldManager : SingletonManager<FieldManager>
         if (states.Count == 0)  //所有している州が無ければ
         {
             Debug.LogWarning("所有している州を発見できず");
-            DeleteCountry(country);                         //国家を削除
-            if (CheckPlayerIsDead())    //もしプレイヤー国家が無ければ
-            {
-                BattleSystemManager.Instance.GameOver(false);   //プレイヤー敗北時演出
-            }
-            else if (CheckPlayerIsOnlyAlive())
-            {
-                BattleSystemManager.Instance.GameOver(true);    //プレイヤー勝利時演出
-            }
-                return null;
+            return null;
         }
         else                    //所有している州があれば
         {
@@ -851,6 +842,15 @@ public class FieldManager : SingletonManager<FieldManager>
         }
         CountryList.Remove(country);                            //マネージャから国家を削除
         CountryDictPlayerKey.Remove(country.OwnedPlayerData);   //プレイヤーから検索できる辞書型も削除
+
+        if (CheckPlayerIsDead())    //もしプレイヤー国家が無ければ
+        {
+            BattleSystemManager.Instance.GameOver(false);   //プレイヤー敗北時演出
+        }
+        else if (CheckPlayerIsOnlyAlive())
+        {
+            BattleSystemManager.Instance.GameOver(true);    //プレイヤー勝利時演出
+        }
     }
 
     /// <summary>

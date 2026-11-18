@@ -1,12 +1,17 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public enum SEType
 {
     None,
-    Chaim,
-    Mouse
+    Chime,
+    Click,
+    Main,
+    State,
+    Country,
+    Force,
+    Diplomacy,
 }
 public enum BGMType
 {
@@ -19,6 +24,11 @@ public enum BGMType
 
 public class AudioManager : SingletonManager<AudioManager>
 {
+    /// <summary>
+    /// プレイヤーが戦争中かどうか
+    /// </summary>
+    public bool PlayerInWar { get; private set; } = false;
+
     public Dictionary<BGMType, AudioSource> BGMAudioPlayerDict = new Dictionary<BGMType, AudioSource>()
     {
         {BGMType.Main, null},
@@ -27,45 +37,62 @@ public class AudioManager : SingletonManager<AudioManager>
 
     public Dictionary<SEType, AudioSource> SEAudioPlayerDict = new Dictionary<SEType, AudioSource>()
     {
-        {SEType.Chaim, null},
-        {SEType.Mouse, null},
+        {SEType.Chime, null},
+        {SEType.Click, null},
     };
+
+    private async Task Update()
+    {
+        if (BattleSystemManager.Instance.PlayerCountry.EnemyCountryList.Count > 0 && !PlayerInWar)  //プレイヤーが戦争状態になった瞬間
+        {
+            PlayerInWar = true;
+            PlayBGM(BGMType.Main, BGMType.Main_War);
+        }
+
+        if (BattleSystemManager.Instance.PlayerCountry.EnemyCountryList.Count == 0 && PlayerInWar)  //プレイヤーが平時状態になった瞬間
+        {
+            PlayerInWar = false;
+            PlayBGM(BGMType.Main, BGMType.Main_Peace);
+        }
+    }
 
     /// <summary>
     /// SE再生
     /// </summary>
     /// <param name="clip"></param>
-    public void PlaySE(SEType type, AudioClip clip)
+    public async Task PlaySE(SEType source, SEType type)
     {
-        if (!SEAudioPlayerDict.ContainsKey(type)) return;
-        SEAudioPlayerDict[type].PlayOneShot(clip);
+        if (!SEAudioPlayerDict.ContainsKey(source)) return;
+
+        SEAudioPlayerDict[source].PlayOneShot(await AddressableManager.Instance.LoadSEClipAsync(type));
     }
 
     /// <summary>
     /// SE停止
     /// </summary>
-    public void StopSE(SEType type)
+    public void StopSE(SEType source)
     {
-        if (!SEAudioPlayerDict.ContainsKey(type)) return;
-        SEAudioPlayerDict[type].Stop();
+        if (!SEAudioPlayerDict.ContainsKey(source)) return;
+        SEAudioPlayerDict[source].Stop();
     }
 
     /// <summary>
     /// BGM再生
     /// </summary>
-    /// <param name="clip"></param>
-    public void PlayBGM(BGMType type, AudioClip clip)
+    /// <param name="source">流す場所</param>
+    /// <param name="type">流す種類</param>
+    public async Task PlayBGM(BGMType source, BGMType type)
     {
-        BGMAudioPlayerDict[type].clip = clip;
-        BGMAudioPlayerDict[type].Play();
+        BGMAudioPlayerDict[source].clip = await AddressableManager.Instance.LoadBGMClipAsync(type);
+        BGMAudioPlayerDict[source].Play();
     }
 
     /// <summary>
     /// BGM停止
     /// </summary>
-    public void StopBGM(BGMType type)
+    public void StopBGM(BGMType source)
     {
-        BGMAudioPlayerDict[type].Stop();
+        BGMAudioPlayerDict[source].Stop();
     }
 
     /// <summary>

@@ -286,9 +286,20 @@ public class State : MonoBehaviour
 
         OwnedCountry = country;         //所有勢力を切り替え
 
-        FieldManager.Instance.GetOwnedStateList(lateCountry);  //占領されていた勢力が全ステートを失えば勢力ごと削除
+        country.AddStateGetCount();     //最大ステート領有数を更新
 
         SetStateColor(OwnedCountry.CountryColor);
+
+        if (lateCountry != null)        //空ステートを占領した時に不具合が出ないように
+        {
+            var states = FieldManager.Instance.GetOwnedStateList(lateCountry);
+
+            if (states == null)                                 //占領されていた勢力が全ステートを失えば勢力ごと削除
+            {
+                country.AddCountryKillCount();                  //崩壊させた勢力数を追加
+                FieldManager.Instance.DeleteCountry(country);   //国家を削除
+            }
+        }
     }
 
     public async Task SetStateData(StateData data)

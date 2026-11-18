@@ -16,6 +16,8 @@ public class CountryMenu : TacticalMenu
 
     public override void Init()
     {
+        AudioManager.Instance.PlaySE(SEType.Main, SEType.Country);
+
         SetCountryDataforMenu(BattleSystemManager.Instance.SelectingCountry);
         BattleSystemManager.Instance.ResetOwnedAllStateColor(BattleSystemManager.Instance.SelectingCountry);                        //ステート色を一旦リセット
         BattleSystemManager.Instance.ChangeOwnedAllStateColor(BattleSystemManager.Instance.SelectingCountry, FieldManager.Instance.StateColorDict[StateColorType.Selecting]);   //勢力に属するステート全ての色を変更

@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 public class ResultUI : MonoBehaviour
 {
@@ -20,8 +21,8 @@ public class ResultUI : MonoBehaviour
     [Header("署名日のテキスト")]
     [SerializeField] private TextMeshProUGUI m_SignatureDataText;
 
-    [Header("署名GIF")]
-    [SerializeField] private UniGifImage m_SignatureGIF;
+    [Header("署名ムービー")]
+    [SerializeField] private VideoPlayer m_SignatureVideo;
 
     [Header("ゲーム終了ボタン")]
     [SerializeField] private GameObject m_SignatureButton;
@@ -65,7 +66,7 @@ public class ResultUI : MonoBehaviour
     public void GameOver()
     {
         m_SignatureButton.gameObject.SetActive(false);
-        m_SignatureGIF.SetGifFromUrl("https://www.image2url.com/r2/default/gifs/1794300973505-06871898-c53c-45a0-8263-1284a95cf365.gif", true);
+        m_SignatureVideo.Play();
         m_GameEnded = true;
     }
 }

@@ -141,7 +141,7 @@ public class ForceGroup
                 {
                     if (pair.Value.Equals(this))
                     {
-                        ModelManager.Instance.ChangeBattleModel(false, GuardingState, country, this);  //ƒ‚ƒfƒ‹íœ
+                        ModelManager.Instance.ChangeGuarrisonModel(false, GuardingState, this);  //ƒ‚ƒfƒ‹íœ
                         WorldUIManager.Instance.RemoveForceUI(this);        //UIíœ
                         country.GuardingForceGroupDict.Remove(pair.Key);    //‘åŒR’cíœ
                         break;  //ŠY“–‚·‚é‚à‚Ì‚ª•¡”‚È‚¯‚ê‚Î‚±‚±‚ÅI—¹

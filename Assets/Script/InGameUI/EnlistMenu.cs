@@ -20,6 +20,13 @@ public struct EnlistData
     public int ResourceCost;
 }
 
+public enum EnlistMenuWarning
+{
+    Fund,
+    Resource,
+    Both
+}
+
 public class EnlistMenu : TacticalMenu
 {
     [SerializeField] private TMP_InputField m_ForcesNameInput;
@@ -27,6 +34,8 @@ public class EnlistMenu : TacticalMenu
     [SerializeField] private TextMeshProUGUI m_MaxSoldierValueText;
     [SerializeField] private TextMeshProUGUI m_NeedFundText;
     [SerializeField] private TextMeshProUGUI m_NeedResourceText;
+    [SerializeField] private TextMeshProUGUI m_WarningText;
+    [SerializeField] private GameObject m_WarningPopup;
     [SerializeField] private TMP_InputField m_SoldierValueInput;
     [SerializeField] private Slider m_SoldierSlider;
 
@@ -48,6 +57,9 @@ public class EnlistMenu : TacticalMenu
 
     private bool m_IsUpdating = false;
 
+    private float m_WarninigTime = 0.0f;
+    private const float kMaxWarninigTime = 3.0f;
+
     private void Start()
     {
         m_SoldierValueInput.onEndEdit.AddListener(OnSoldierInputEndEdit);  //兵数インプットをチェック
@@ -57,8 +69,17 @@ public class EnlistMenu : TacticalMenu
 
     private void Update()
     {
-        //m_SoldierValueInput.text = m_SoldierValue.ToString();
         m_MaxSoldierValueText.SetText("/" + NewForcesData.MaxSoldiers);
+
+        if (m_WarningPopup.activeSelf)
+        {
+            m_WarninigTime += Time.deltaTime;
+        }
+
+        if (m_WarninigTime > kMaxWarninigTime)  //3秒立てば
+        {
+            m_WarningPopup.SetActive(false);    //消す
+        }
     }
 
     public void SelectInfantry()
@@ -66,36 +87,62 @@ public class EnlistMenu : TacticalMenu
         NewForcesData = BattleSystemManager.Instance.SetEnlistData(ForceType.Infantry);
         Debug.Log("歩兵選択中");
         m_ForcesTypeText.SetText("歩兵");
+        SoldierValue = 0;
+        m_SoldierSlider.value = SoldierValue;
     }
     public void SelectMilitia()
     {
         NewForcesData = BattleSystemManager.Instance.SetEnlistData(ForceType.Militia);
         Debug.Log("民兵選択中");
         m_ForcesTypeText.SetText("民兵");
+        SoldierValue = 0;
+        m_SoldierSlider.value = SoldierValue;
     }
     public void SelectArtillery()
     {
         NewForcesData = BattleSystemManager.Instance.SetEnlistData(ForceType.Artillery);
         Debug.Log("砲兵選択中");
         m_ForcesTypeText.SetText("砲兵");
+        SoldierValue = 0;
+        m_SoldierSlider.value = SoldierValue;
     }
     public void SelectCavalry()
     {
         NewForcesData = BattleSystemManager.Instance.SetEnlistData(ForceType.Cavalry);
         Debug.Log("騎兵選択中");
         m_ForcesTypeText.SetText("騎兵");
+        SoldierValue = 0;
+        m_SoldierSlider.value = SoldierValue;
     }
     public void SelectTank()
     {
         NewForcesData = BattleSystemManager.Instance.SetEnlistData(ForceType.Tank);
         Debug.Log("戦車兵選択中");
         m_ForcesTypeText.SetText("戦車兵");
+        SoldierValue = 0;
+        m_SoldierSlider.value = SoldierValue;
     }
 
     //-----------------|ボタン用|プレイヤーの調整項目に応じて徴兵を行うコマンド------------------
     public void EnlistCustomForce()
     {
-        CountryData countryData = BattleSystemManager.Instance.SelectingCountry;
+        if (NewForcesData.FundCost * SoldierValue > BattleSystemManager.Instance.PlayerCountry.Fund && NewForcesData.ResourceCost * SoldierValue > BattleSystemManager.Instance.PlayerCountry.Resource)
+        {
+            SetActiveWarning(EnlistMenuWarning.Both);                                                               //両方足りなければ
+            return;
+        }
+        else if (NewForcesData.FundCost * SoldierValue > BattleSystemManager.Instance.PlayerCountry.Fund)           //徴兵資金が足りなければ
+        {
+            SetActiveWarning(EnlistMenuWarning.Fund);
+            return;
+        }
+        else if (NewForcesData.ResourceCost * SoldierValue > BattleSystemManager.Instance.PlayerCountry.Resource)    //徴兵資金が足りなければ
+        {
+            SetActiveWarning(EnlistMenuWarning.Resource);
+            return;
+        }
+
+            CountryData countryData = BattleSystemManager.Instance.SelectingCountry;
 
         ForceData newforce = NewForcesData; //新しい軍団のバッファ
 
@@ -106,6 +153,7 @@ public class EnlistMenu : TacticalMenu
 
         newforce.ForcesName = m_ForcesNameInput.text;   //軍団名入力
         newforce.Soldiers = SoldierValue;               //兵数入力
+        newforce.MaxSoldiers = SoldierValue;            //兵数入力
         newforce.OwnerCountry = countryData;
 
         NewForcesData = newforce;
@@ -190,5 +238,24 @@ public class EnlistMenu : TacticalMenu
         m_NeedResourceText.SetText(((int)value * NewForcesData.ResourceCost).ToString());  //必要資源テキスト変更
 
         m_IsUpdating = false;
+    }
+
+    private void SetActiveWarning(EnlistMenuWarning warning)
+    {
+        switch (warning)
+        {
+            case EnlistMenuWarning.Fund:
+                m_WarningText.SetText("資金が足りません");
+                break;
+            case EnlistMenuWarning.Resource:
+                m_WarningText.SetText("資源が足りません");
+                break;
+            case EnlistMenuWarning.Both:
+                m_WarningText.SetText("資金・資源が足りません");
+                break;
+        }
+
+        m_WarninigTime = 0;
+        m_WarningPopup.SetActive(true);
     }
 }

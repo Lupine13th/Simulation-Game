@@ -21,7 +21,7 @@ public class TimeCounterUI : MonoBehaviour
 
     private void Start()
     {
-        AudioManager.Instance.AddSEAudioSource(SEType.Chaim, m_ChaimSESource);
+        AudioManager.Instance.AddSEAudioSource(SEType.Chime, m_ChaimSESource);
         AudioManager.Instance.AddBGMAudioSource(BGMType.Timer, m_HandSESource);
     }
 

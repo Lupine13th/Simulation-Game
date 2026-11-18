@@ -34,6 +34,8 @@ public class DiplomacyMenu : TacticalMenu
 
     public override void Init()
     {
+        AudioManager.Instance.PlaySE(SEType.Main, SEType.Diplomacy);
+
         for (int i = 0; i < m_CountryButtonList.Count; i++)
         {
             Destroy(m_CountryButtonList[i].gameObject);

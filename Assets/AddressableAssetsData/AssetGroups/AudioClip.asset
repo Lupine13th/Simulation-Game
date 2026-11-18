@@ -15,8 +15,23 @@ MonoBehaviour:
   m_GroupName: AudioClip
   m_GUID: c0c57181d56e9ff4584fc9e021cd8de7
   m_SerializeEntries:
+  - m_GUID: 2a7084a1e76522949a05948bf829ef1a
+    m_Address: CountrySE
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 381573706978d40439fb94e33796472a
+    m_Address: ClockChimeSE
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4c69c6e9f6d65994eb0341d52498b88e
     m_Address: WarBGM
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 52f7fda1a8ff32b4e9cd50aa364fe73b
+    m_Address: ClickSE
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -25,8 +40,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 9ae65552ceee04642ae142edaa9c666b
-    m_Address: ClockChimeSE
+  - m_GUID: 9aa11fdf835658d4fa947726c93a5606
+    m_Address: DiplomacySE
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b70c51d1abfc4fc469ecea06a9f8da71
+    m_Address: StateSE
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ccc1347f96ec45949a69454ae3267f4d
+    m_Address: ForceSE
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

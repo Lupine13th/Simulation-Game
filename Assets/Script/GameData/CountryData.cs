@@ -695,6 +695,33 @@ public class CountryData
             AllResource += state.Resource; //資源を追加
         }
     }
+
+    /// <summary>
+    /// ステート所有数の最大数を更新
+    /// </summary>
+    public void AddStateGetCount()
+    {
+        if (StateGetCount < FieldManager.Instance.GetOwnedStateList(this).Count)    //現在所有中のステートが過去の最大領域より大きい
+        {
+            StateGetCount = FieldManager.Instance.GetOwnedStateList(this).Count;    //その値に
+        }
+    }
+
+    /// <summary>
+    /// 崩壊させた勢力を追加
+    /// </summary>
+    public void AddCountryKillCount()
+    {
+        CountryKillCount++;
+    }
+
+    /// <summary>
+    /// 崩壊させた勢力を追加
+    /// </summary>
+    public void AddDeathCount(int value)
+    {
+        DeathCount += value;
+    }
 }
 
 public enum LIdeology

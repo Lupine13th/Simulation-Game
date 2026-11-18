@@ -28,6 +28,7 @@ public class MousePointerUIManager : SingletonManager<MousePointerUIManager>
     private void Start()
     {
         m_MainCamera = Camera.main;
+        AudioManager.Instance.AddSEAudioSource(SEType.Click ,GetComponent<AudioSource>());
     }
 
     private void Update()

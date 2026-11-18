@@ -9,16 +9,23 @@ public class ForcesMenu : TacticalMenu
     [SerializeField] private ForceDataUI m_ForcePrehab;
     [SerializeField] private EnlistMenu m_EnlistMenu;
 
-    private List<GameObject> m_ForceUIList = new List<GameObject>();
+    private List<ForceDataUI> m_ForceUIList = new List<ForceDataUI>();
 
     private bool m_EditingForce = false;
 
     public override void Init()
     {
+        AudioManager.Instance.PlaySE(SEType.Main, SEType.Force);
+
         UpdateForceUI(BattleSystemManager.Instance.SelectingCountry);   //軍隊メニューを更新
         CloseEnlistMenu();                                              //徴兵メニューを閉じる
         BattleSystemManager.Instance.ResetOwnedAllStateColor(BattleSystemManager.Instance.SelectingCountry);                        //ステート色を一旦リセット
         BattleSystemManager.Instance.SelectingState.SetStateColor(FieldManager.Instance.StateColorDict[StateColorType.Selecting]);  //選択ステートのみ色変更
+    }
+
+    private void LateUpdate()
+    {
+        RefreshForceMenu();
     }
 
     /// <summary>
@@ -32,10 +39,35 @@ public class ForcesMenu : TacticalMenu
             ForceDataUI currentForceObj = Instantiate(m_ForcePrehab, m_ListContent);  //ListにForce情報が記入されたUIオブジェクトを配置していく
             currentForceObj.SetForceDataUI(force);
             currentForceObj.RefreshPositionName();
-            m_ForceUIList.Add(currentForceObj.gameObject);
+            m_ForceUIList.Add(currentForceObj);
         }
 
         m_EditingForce = false;
+    }
+
+    /// <summary>
+    /// 軍団メニューを更新
+    /// </summary>
+    public void RefreshForceMenu()
+    {
+        var garbageList = new List<ForceDataUI>();
+
+        foreach (var forceUi in m_ForceUIList)
+        {
+            if (forceUi.ForceData != null)
+            {
+                forceUi.SetForceDataUI(forceUi.ForceData);  //情報更新
+            }
+            else
+            {
+                garbageList.Add(forceUi);   //ゴミ箱へ
+            }
+        }
+
+        for (int i = 0; i < garbageList.Count; i++)
+        {
+            m_ForceUIList.Remove(garbageList[i]);   //ゴミ箱の中を処理
+        }
     }
 
     public void OpenEnlistMenu()
@@ -137,7 +169,7 @@ public class ForcesMenu : TacticalMenu
     {
         foreach (var obj in m_ForceUIList)
         {
-            Destroy(obj);
+            Destroy(obj.gameObject);
         }
 
         m_ForceUIList.Clear();

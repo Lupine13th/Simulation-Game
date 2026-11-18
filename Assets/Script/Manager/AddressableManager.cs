@@ -59,13 +59,19 @@ public class AddressableManager : SingletonManager<AddressableManager>
 
     public Dictionary<SEType, string> SEAudioClipAddress { get; private set; } = new Dictionary<SEType, string>()
     {
-        {SEType.Chaim, "ClockChimeSE"},
+        {SEType.Chime, "ClockChimeSE"},
+        {SEType.Click, "ClickSE"},
+        {SEType.State, "StateSE"},
+        {SEType.Country, "CountrySE"},
+        {SEType.Force, "ForceSE"},
+        {SEType.Diplomacy, "DiplomacySE"},
     };
 
     public Dictionary<BGMType, string> BGMAudioClipAddress { get; private set; } = new Dictionary<BGMType, string>()
     {
         {BGMType.Timer, "ClockHandBGM"},
         {BGMType.Main_Peace, "PeaceBGM"},
+        {BGMType.Main_War, "WarBGM"},
     };
 
     public void ParseCsvIdeologyType(string csv, Dictionary<LIdeology, List<string>> ideologyTextList)   //CSVデータを行ごとに並び替え(引数２は状況に応じて変わるため必要)
@@ -280,11 +286,28 @@ public class AddressableManager : SingletonManager<AddressableManager>
     }
 
     ///<summary>
+    ///アドレスからSEのAudioClipを取得
+    /// </summary>
+    public async Task<AudioClip> LoadSEClipAsync(SEType type)  
+    {
+        var handle = Addressables.LoadAssetAsync<AudioClip>(SEAudioClipAddress[type]);
+        await handle.Task;
+        if (handle.Result != null)
+        {
+            return handle.Result;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    ///<summary>
     ///アドレスからAudioClipを取得
     /// </summary>
-    public async Task<AudioClip> LoadAudioClipAsync(string address)  
+    public async Task<AudioClip> LoadBGMClipAsync(BGMType type)  
     {
-        var handle = Addressables.LoadAssetAsync<AudioClip>(address);
+        var handle = Addressables.LoadAssetAsync<AudioClip>(BGMAudioClipAddress[type]);
         await handle.Task;
         if (handle.Result != null)
         {

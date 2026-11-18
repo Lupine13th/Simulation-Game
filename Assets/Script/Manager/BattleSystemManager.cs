@@ -54,6 +54,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     [SerializeField] private InventryUI m_InventryUI;
 
     [SerializeField] private AudioSource m_MainBGMPlayer;
+    [SerializeField] private AudioSource m_MainSEPlayer;
 
     [Header("")]
     [SerializeField] private ResultUI m_ResultUI;
@@ -130,8 +131,9 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         FieldManager.Instance.StopTimeCount();
         m_TimeCounterUI.ChangeTimeImage(false);
 
-        AudioManager.Instance.AddBGMAudioSource(BGMType.Main, m_MainBGMPlayer); //メインBGMを再生
-        AudioManager.Instance.PlayBGM(BGMType.Main, await AddressableManager.Instance.LoadAudioClipAsync(AddressableManager.Instance.BGMAudioClipAddress[BGMType.Main_Peace])); //メインBGMを再生
+        AudioManager.Instance.AddBGMAudioSource(BGMType.Main, m_MainBGMPlayer); //メインBGM
+        AudioManager.Instance.AddSEAudioSource(SEType.Main, m_MainSEPlayer);    //メインSE
+        AudioManager.Instance.PlayBGM(BGMType.Main, BGMType.Main_Peace); //メインBGMを再生
     }
 
     void Update()
@@ -348,6 +350,8 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
                     OpenCountryMenu();                                              //国家メニューオープン
                     break;
             }
+
+            AudioManager.Instance.PlaySE(SEType.Click, SEType.Click);
         }
     }
 
@@ -476,6 +480,11 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
     public void OpenTacticalMenu(int menuIndex)
     {
         if (menuIndex == 2 && SelectingCountry != PlayerCountry)
+        {
+            return;
+        }
+
+        if ((menuIndex == 1 || menuIndex == 3) && SelectingCountry == null)
         {
             return;
         }
