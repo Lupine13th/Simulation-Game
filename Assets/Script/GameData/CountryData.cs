@@ -692,7 +692,7 @@ public class CountryData
         foreach (var state in stateList)
         {
             AllIncome += state.Income;   //Žû“ü‚ð’Ç‰Á
-            AllResource += state.Resource; //Ž‘Œ¹‚ð’Ç‰Á
+            AllResource += state.Yield; //Ž‘Œ¹‚ð’Ç‰Á
         }
     }
 

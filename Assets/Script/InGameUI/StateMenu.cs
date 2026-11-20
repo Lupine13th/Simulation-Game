@@ -35,7 +35,7 @@ public class StateMenu : TacticalMenu
     public async Task SetStateData(State state)
     {
         m_StateNameText.SetText(state.StateNameJP);   //ステート名
-        m_ResourceText.SetText(state.Resource.ToString());  //資源
+        m_ResourceText.SetText(state.Yield.ToString());  //資源
         m_IncomeText.SetText(state.Income.ToString());    //収入
         m_PopulationText.SetText(state.Population.ToString());  //人口
         m_CultureText.SetText(state.StateCultureJP.ToString());  //文化

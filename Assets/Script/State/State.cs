@@ -65,6 +65,7 @@ public class State : MonoBehaviour
     [SerializeField] private int m_Resource;    //このステートの資源
     [SerializeField] private int m_Income;      //このステートの収入
     [SerializeField] private int m_Population;  //このステートの人口
+    [SerializeField] private int m_Ration;      //このステートの糧食
 
     [SerializeField] private GameObject m_StateIcon;            //アイコン
     [SerializeField] private SpriteRenderer m_IconBackGround;   //アイコン背景
@@ -101,9 +102,10 @@ public class State : MonoBehaviour
     public AboveModelState ModelState { get; private set; }
 
     public int StateID => m_StateID;
-    public int Resource => m_Resource;
+    public int Yield => m_Resource;
     public int Income => m_Income;
     public int Population => m_Population;
+    public int Ration => m_Ration;
     public List<Province> ProvinceList => m_ProvinceList;
 
     private Direction m_EditState = Direction.North; //Provinceを配置する際の方向を管理する変数

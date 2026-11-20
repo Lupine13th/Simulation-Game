@@ -13,13 +13,12 @@ using UnityEditor;
 public enum MenuType
 { 
     None,
-    State = 0,
-    Country = 1,
-    Forces = 2,
-    Diplomacy = 3,
-    Enlist = 4,
-    Order = 5,
-    Building = 6
+    Country = 0,
+    Forces = 1,
+    Diplomacy = 2,
+    Enlist = 3,
+    Order = 4,
+    Building = 5
 }
 
 public enum EditState
@@ -331,15 +330,16 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
             {
                 default:
                     break;
-                case MouseButton.Right:                             //=========================右クリック時==========================
+                case MouseButton.Left:                             //=========================右クリック時==========================
                     if (SelectingState != null) SelectingState.ResetStateColor();   //選択ステートの色をリセット
 
                     selectingProvince = hit.collider.GetComponent<Province>();      //クリックしたプロヴィンス
                     SelectingState = selectingProvince.OwnedState;                  //選択ステートに設定
                     SelectingCountry = SelectingState.OwnedCountry;
-                    OpenStateMenu();                                                //戦術メニューオープン
+
+                    PopupManager.Instance.InstantiateStatePopupOnMousePosition(selectingProvince.OwnedState);   //ステート用ポップアップを生成
                     break;
-                case MouseButton.Left:                              //=========================左クリック時==========================
+                case MouseButton.Right:                              //=========================左クリック時==========================
                     if (hit.collider.GetComponent<Province>().OwnedState.OwnedCountry == null) return;
 
                     if (SelectingState != null) SelectingState.ResetStateColor();   //選択ステートの色をリセット
@@ -347,7 +347,7 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
                     selectingProvince = hit.collider.GetComponent<Province>();      //クリックしたプロヴィンス
                     SelectingState = selectingProvince.OwnedState;                  //選択ステートに設定
                     SelectingCountry = SelectingState.OwnedCountry;
-                    OpenCountryMenu();                                              //国家メニューオープン
+                    OpenCountryMenu();                                              //勢力メニューオープン
                     break;
             }
 
@@ -500,20 +500,6 @@ public class BattleSystemManager : SingletonManager<BattleSystemManager>
         MenuDict[menu].gameObject.SetActive(true);  //対象のメニューを展開
 
         MenuDict[menu].Init();                      //メニューの準備をさせる
-    }
-
-    public void OpenStateMenu()
-    {
-        OpenTacticalMenu();  //戦術メニューオープン
-        ResetAllMenu();
-        MenuDict[MenuType.State].gameObject.SetActive(true);
-        MenuDict[MenuType.State].GetComponent<StateMenu>().SetStateData(SelectingState);   //戦術メニューテキスト入力
-
-        SetLabel(0);
-
-        ResetOwnedAllStateColor(SelectingCountry);
-
-        SelectingState.SetStateColor(FieldManager.Instance.StateColorDict[StateColorType.Selecting]);   //新しい選択ステートの色をセット
     }
 
     public void OpenCountryMenu()

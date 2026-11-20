@@ -66,6 +66,7 @@
     <Compile Include="Assets\Script\InGameUI\InventryUI.cs" />
     <Compile Include="Assets\Script\Manager\AudioManager.cs" />
     <Compile Include="Assets\Script\InGameUI\Notification\NotificationUI.cs" />
+    <Compile Include="Assets\Script\InGameUI\Popup\Popup.cs" />
     <Compile Include="Assets\Script\InGameUI\Notification\TakeAttackNotificationUI.cs" />
     <Compile Include="Assets\UniGif\UniGifConst.cs" />
     <Compile Include="Assets\Script\State\Province.cs" />
@@ -73,12 +74,14 @@
     <Compile Include="Assets\UniGif\Example\Script\Utility\UniGifImageAspectController.cs" />
     <Compile Include="Assets\Script\Manager\BattleSystemManager.cs" />
     <Compile Include="Assets\Script\InGameUI\OrderMenu.cs" />
+    <Compile Include="Assets\Script\InGameUI\Popup\StatePopup.cs" />
     <Compile Include="Assets\Script\InGameUI\WorldSpaceUI_Battle.cs" />
     <Compile Include="Assets\Script\InGameUI\CountryMenu.cs" />
     <Compile Include="Assets\Script\InGameUI\CountryButton.cs" />
     <Compile Include="Assets\UniGif\UniGifExtension.cs" />
     <Compile Include="Assets\Script\Manager\MousePointerUIManager.cs" />
     <Compile Include="Assets\Script\GameData\PlayerData.cs" />
+    <Compile Include="Assets\Script\Manager\PopupManager.cs" />
     <Compile Include="Assets\Script\InGameUI\ResultUI.cs" />
     <Compile Include="Assets\Script\InGameUI\WorldSpaceUI_Force.cs" />
     <Compile Include="Assets\Script\InGameUI\ForceDataUI.cs" />
@@ -95,6 +98,7 @@
     <Compile Include="Assets\Script\InGameUI\TimeCounterUI.cs" />
     <Compile Include="Assets\Script\InGameUI\FlagAndNameUI.cs" />
     <Compile Include="Assets\UniGif\UniGif.cs" />
+    <Compile Include="Assets\Script\InGameUI\Popup\WindowDraging.cs" />
     <Compile Include="Assets\Script\GameData\CommanderData.cs" />
     <Compile Include="Assets\UniGif\Example\Script\UniGifTest.cs" />
     <Compile Include="Assets\Script\GameData\CountryData.cs" />

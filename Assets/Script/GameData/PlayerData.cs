@@ -92,7 +92,7 @@ public class PlayerData : MonoBehaviour
                     value = 500;   //500点からスタート
                 }
 
-                int stateValue = (state.Income + state.Resource) / 10;  //ステート自身の評価
+                int stateValue = (state.Income + state.Yield) / 10;  //ステート自身の評価
 
                 value += stateValue;   //加点
 
@@ -111,7 +111,7 @@ public class PlayerData : MonoBehaviour
                     value = 400;   //400点からスタート
                 }
 
-                int stateValue = (state.Income + state.Resource) / 10;  //ステート自身の評価
+                int stateValue = (state.Income + state.Yield) / 10;  //ステート自身の評価
 
                 value += stateValue;   //加点
 
