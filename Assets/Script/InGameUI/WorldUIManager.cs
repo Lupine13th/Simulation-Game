@@ -70,6 +70,7 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
     private void LateUpdate()
     {
         RefreshUIPosition();
+        UpdateForceUI();
     }
 
     /// <summary>
@@ -239,14 +240,7 @@ public class WorldUIManager : SingletonManager<WorldUIManager>
 
             force.Key.UpdateDatas();
 
-            force.Value.FlagImage.sprite = headForce.OwnerCountry.CountryFlag;  //‘Šøƒf[ƒ^“ü—Í
-            force.Value.ForceNameText.SetText(headForce.ForcesName);            //ŒR’c‚Ì–¼‘O‚ğ“ü—Í
-            force.Value.SoldiersText.SetText(force.Key.AllSoldier.ToString());    //ŒR’c‚Ì•º”‚ğ“ü—Í
-            force.Value.AttackText.SetText(headForce.AttackPower.ToString());   //ŒR’c‚ÌUŒ‚—Í‚ğ“ü—Í
-            force.Value.DefenceText.SetText(headForce.DefensePower.ToString()); //ŒR’c‚Ì–hŒä—Í‚ğ“ü—Í
-
-            Vector3 color = headForce.OwnerCountry.CountryColor;    //‘‰ÆƒJƒ‰[æ“¾
-            force.Value.BackGround.color = new Color(color.x, color.y, color.z);                            //”wŒi‚É“K‰
+            force.Value.UpdateForceUI(headForce);
         }
     }
 }

@@ -10,9 +10,15 @@ public class CountryMenu : TacticalMenu
     [SerializeField] private TextMeshProUGUI m_MainCultureText;
     [SerializeField] private TextMeshProUGUI m_AllResourceText;
     [SerializeField] private TextMeshProUGUI m_AllIncomeText;
+    [SerializeField] private TextMeshProUGUI m_AllSoldierText;
     [SerializeField] private Image m_CountryFlag;
     [SerializeField] private Image m_LeaderPortrait;
     [SerializeField] private Image m_MainCultureImage;
+
+    private void LateUpdate()
+    {
+        SetCountryDataforMenu(BattleSystemManager.Instance.SelectingCountry);
+    }
 
     public override void Init()
     {
@@ -34,6 +40,7 @@ public class CountryMenu : TacticalMenu
 
         m_AllResourceText.SetText(country.AllResource.ToString());
         m_AllIncomeText.SetText(country.AllIncome.ToString());
+        m_AllSoldierText.SetText(country.AllSoldiers.ToString());
 
         m_CountryFlag.sprite = country.CountryFlag;
         m_LeaderPortrait.sprite = country.LeaderPortrait;

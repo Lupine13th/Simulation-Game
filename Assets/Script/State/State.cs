@@ -301,6 +301,17 @@ public class State : MonoBehaviour
                 country.AddCountryKillCount();                  //•ö‰ó‚³‚¹‚½¨—Í”‚ğ’Ç‰Á
                 FieldManager.Instance.DeleteCountry(country);   //‘‰Æ‚ğíœ
             }
+            else
+            {
+                if (lateCountry.GuardingForceGroupDict.ContainsKey(this))
+                {
+                    foreach (var force in lateCountry.GuardingForceGroupDict[this].ThisPlaceForceList)
+                    {
+                        FieldManager.Instance.SetForceOnState(FieldManager.Instance.GetOwnedStateList(lateCountry)[0], force);
+                    }
+                    
+                }
+            }
         }
     }
 

@@ -225,6 +225,8 @@ public class FieldManager : SingletonManager<FieldManager>
             {
                 playerData.SetPlayer(false, i); //それ以外はAI
             }
+
+            country.InitEnlist();
         }
 
         //=====================国家生成フェーズEnd=================
@@ -364,7 +366,6 @@ public class FieldManager : SingletonManager<FieldManager>
         }
 
         WorldUIManager.Instance.UpdateStateUI();    //ステートUI更新
-        WorldUIManager.Instance.UpdateForceUI();    //軍団情報更新
 
         if (FieldTime[TimeType.Hour] >= 24) //24時以降になると
         {
@@ -601,7 +602,10 @@ public class FieldManager : SingletonManager<FieldManager>
         
         if (country == BattleSystemManager.Instance.PlayerCountry)  //このメソッドを呼んだのがプレイヤーの場合
         {
-            force.LinkedUI.RefreshPositionName();       //UIの現在地を更新
+            if (force.LinkedUI != null)
+            {
+                force.LinkedUI.RefreshPositionName();       //UIの現在地を更新
+            }
         }
 
         country.RefreshBattleModelDict();       //モデル用の辞書型を更新

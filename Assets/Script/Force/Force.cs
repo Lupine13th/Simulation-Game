@@ -141,17 +141,6 @@ public class Force
             {
                 return;
             }
-
-            if (targetCountry.GuardingForceGroupDict.ContainsKey(CurrentTargetState))   //ヌルチェック
-            {
-                frontEnemy = targetCountry.GuardingForceGroupDict[CurrentTargetState].GetListHead();    //こちらに攻撃してきている敵が居ないなら、駐屯部隊を取る
-            }
-
-            if (frontEnemy != null)                                             //目の前に敵がいる(ターゲットのステートに部隊が駐屯中)
-            {
-                CalculateBattle(BattleType.Offensive, frontEnemy);              //攻略戦によるダメージ処理
-                return;
-            }
         }
 
         //==========ここ以下の処理は敵と戦争が起こらずに、占領だけが行われているときに通る=========

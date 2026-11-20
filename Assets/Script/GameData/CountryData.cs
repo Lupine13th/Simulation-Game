@@ -179,7 +179,7 @@ public class CountryData
     /// </summary>
     /// <param name="index"></param>
     /// <returns></returns>
-    public async Task<bool> Init(int index)
+    public async Task Init(int index)
     {
         CountryID = index;
 
@@ -202,8 +202,17 @@ public class CountryData
         //====================ステート上での色を設定End======================
 
         Debug.Log("この国家IDは" + CountryID + "で、イデオロギーは" + ForceIdeology + "です。");
+    }
 
-        return true;
+    public void InitEnlist()
+    {
+        ForceData force = BattleSystemManager.Instance.SetEnlistData(ForceType.Infantry);
+
+        force.Soldiers = 1000;      //兵数セット
+        force.OwnerCountry = this;  //所有勢力をセット
+
+        EventEnlist(force);
+        EventEnlist(force); //2000人徴兵しておく
     }
 
     /// <summary>
@@ -326,6 +335,22 @@ public class CountryData
         manager.SetForceOnState(manager.StateList[CapitalStateID], force);  //首都に駐屯部隊として出す
 
         //Debug.Log("徴兵完了:  兵種:" + data.ForceType + "  兵数:" + data.Soldiers + "  使用資金(残り):" + data.FundCost * data.Soldiers + "(" + Fund + ")" +"  使用資源(残り):" + data.ResourceCost * data.Soldiers + "(" + Resource + ")");
+    }
+
+    /// <summary>
+    /// イベントで徴兵を行う　資源と資金の消費は無し
+    /// </summary>
+    /// <param name="data"></param>
+    public void EventEnlist(ForceData data)
+    {
+        FieldManager manager = FieldManager.Instance;   //マネージャのインスタンス取得
+
+        Force force = new Force();  //軍団インスタンス生成
+        force.SetForceData(data);   //軍団情報をセット
+        force.SetRandomCommander(); //指揮官設定
+        ForceList.Add(force);       //リストに追加
+
+        manager.SetForceOnState(manager.StateList[CapitalStateID], force);  //首都に駐屯部隊として出す
     }
 
     /// <summary>
@@ -693,6 +718,13 @@ public class CountryData
         {
             AllIncome += state.Income;   //収入を追加
             AllResource += state.Yield; //資源を追加
+        }
+
+        AllSoldiers = 0;
+
+        foreach (var force in ForceList)
+        {
+            AllSoldiers += force.Soldiers;
         }
     }
 
