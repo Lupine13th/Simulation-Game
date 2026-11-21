@@ -358,11 +358,11 @@ public class FieldManager : SingletonManager<FieldManager>
         foreach (var country in CountryList.ToArray())
         {
             country.UpdateCountryDataOnHour();    //国家ごとの情報更新(時毎)
+        }
 
-            if (!country.OwnedPlayerData.IsPlayer)
-            {
-                //country.OwnedPlayerData.UpdateAIThinking();
-            }
+        foreach (var state in StateList.ToArray())
+        {
+            state.UpdateStateOnDate();
         }
 
         WorldUIManager.Instance.UpdateStateUI();    //ステートUI更新

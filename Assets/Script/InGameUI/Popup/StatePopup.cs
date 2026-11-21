@@ -6,6 +6,10 @@ public class StatePopup : Popup
 {
     [Header("ステート名テキスト")]
     [SerializeField] private TextMeshProUGUI m_StateNameText;
+    [Header("安定度のゲージ")]
+    [SerializeField] private Image m_StabilityGageImage;
+    [Header("安定度のアイコン周りのフェード")]
+    [SerializeField] private Image m_StabilityFadeImage;
     [Header("領有勢力の国旗イメージ")]
     [SerializeField] private Image m_OwnedCountryFlagImage;
     [Header("ステート地形イメージ")]
@@ -24,6 +28,8 @@ public class StatePopup : Popup
     [SerializeField] private TextMeshProUGUI m_RationText;
 
     public State StateData {  get; private set; }
+
+    public const float kGageMaxHeight = 150.0f;
 
     private void LateUpdate()
     {
@@ -61,7 +67,30 @@ public class StatePopup : Popup
         m_PopulationText.SetText(state.Population.ToString());
         m_RationText.SetText(state.Ration.ToString());
 
+        var stabilityPercent = state.Stability / 100.0f;
+
+        if (stabilityPercent < 0.3f)
+        {
+            SetStabilityColor(Color.red);
+        }
+        else if (stabilityPercent < 0.7f)
+        {
+            SetStabilityColor(Color.yellow);
+        }
+        else
+        {
+            SetStabilityColor(Color.green);
+        }
+
+        m_StabilityGageImage.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, stabilityPercent * kGageMaxHeight);   //ゲージの高さを更新
+
         InstantiateRayToWorldPosition(StateData.MidModelPos);
+    }
+
+    public void SetStabilityColor(Color color)
+    {
+        m_StabilityGageImage.color = color;
+        m_StabilityFadeImage.color = color;
     }
 }
     

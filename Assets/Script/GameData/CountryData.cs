@@ -436,13 +436,15 @@ public class CountryData
             }
         }
 
-        foreach (var force in GuardingForceGroupDict.Values.ToArray())  //防御部隊の処理
+        foreach (var force in GuardingForceGroupDict.ToArray())  //防御部隊の処理
         {
-            currentAllSoldiers += force.AllSoldier;     //軍団ごとの値を入力
+            currentAllSoldiers += force.Value.AllSoldier;   //軍団ごとの値を入力
 
-            if (!force.InBattle)                 //この時間に戦闘を行っていない
+            force.Key.ChangeStateStability(1.0f);
+
+            if (!force.Value.InBattle)                      //この時間に戦闘を行っていない
             {
-                force.HealAllForces();                  //全部隊回復
+                force.Value.HealAllForces();                //全部隊回復
             }
         }
 

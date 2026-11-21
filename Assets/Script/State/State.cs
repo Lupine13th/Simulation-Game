@@ -62,15 +62,24 @@ public class State : MonoBehaviour
     [SerializeField] private int m_StateID;                 //このステートのID
     [SerializeField] private Province m_ProvincePrehab;   //Provinceのプレハブ
     [SerializeField] private Province m_BorderPrehab;     //Borderのプレハブ
-    [SerializeField] private int m_Resource;    //このステートの資源
-    [SerializeField] private int m_Income;      //このステートの収入
-    [SerializeField] private int m_Population;  //このステートの人口
-    [SerializeField] private int m_Ration;      //このステートの糧食
+
+   
 
     [SerializeField] private GameObject m_StateIcon;            //アイコン
     [SerializeField] private SpriteRenderer m_IconBackGround;   //アイコン背景
 
     public CountryData OwnedCountry { get; private set; }
+
+    public int Yield { get; private set; }    //このステートの資源
+    public int Income { get; private set; }    //このステートの収入
+    public int Population { get; private set; } //このステートの人口
+    public int Ration { get; private set; }     //このステートの糧食
+
+    public float Stability { get; private set; } = 100.0f;  //このステートの安定度
+
+    public const float kMaxStability = 100.0f;  //このステートの安定度
+
+
 
     public string StateName { get; private set; }
     public string StateNameJP { get; private set; }
@@ -102,10 +111,6 @@ public class State : MonoBehaviour
     public AboveModelState ModelState { get; private set; }
 
     public int StateID => m_StateID;
-    public int Yield => m_Resource;
-    public int Income => m_Income;
-    public int Population => m_Population;
-    public int Ration => m_Ration;
     public List<Province> ProvinceList => m_ProvinceList;
 
     private Direction m_EditState = Direction.North; //Provinceを配置する際の方向を管理する変数
@@ -114,9 +119,10 @@ public class State : MonoBehaviour
     {
         m_StateID = FieldManager.Instance.GetStateList().Count;   //ステートIDを決定
 
-        m_Resource = Random.Range(0, 300) * 10;     //資源を0～3000に
-        m_Income = Random.Range(0, 300) * 10;       //収入を0～3000に
-        m_Population = Random.Range(10000, 100000);   //人口を10000～100000に
+        Yield = Random.Range(50, 300) * 10;         //資源を0～3000に
+        Income = Random.Range(50, 300) * 10;        //収入を0～3000に
+        Population = Random.Range(10000, 100000);   //人口を10000～100000に
+        Ration = Random.Range(1000, 10000);         //糧食を1000～10000に
 
         //===========ステートの種類を設定===========
         StateType = SetStateType();
@@ -259,6 +265,18 @@ public class State : MonoBehaviour
         return isBorder;
     }*/
 
+    /// <summary>
+    /// 1日ごとのステート内処理
+    /// </summary>
+    public void UpdateStateOnDate()
+    {
+        ChangeStateStability(1.0f);
+    }
+
+    /// <summary>
+    /// 所有する全プロヴィンスの色を変える
+    /// </summary>
+    /// <param name="color"></param>
     public void SetStateColor(Vector3 color)
     {
         foreach (var prov in m_ProvinceList)
@@ -282,6 +300,10 @@ public class State : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 所有勢力を変更
+    /// </summary>
+    /// <param name="country"></param>
     public void SetOwner(CountryData country)
     {
         var lateCountry = OwnedCountry; //過去に所有されていた勢力
@@ -303,13 +325,12 @@ public class State : MonoBehaviour
             }
             else
             {
-                if (lateCountry.GuardingForceGroupDict.ContainsKey(this))
+                if (lateCountry.GuardingForceGroupDict.ContainsKey(this))   //占領が完了したステートに敵の駐屯軍がいれば
                 {
                     foreach (var force in lateCountry.GuardingForceGroupDict[this].ThisPlaceForceList)
                     {
-                        FieldManager.Instance.SetForceOnState(FieldManager.Instance.GetOwnedStateList(lateCountry)[0], force);
+                        FieldManager.Instance.SetForceOnState(FieldManager.Instance.GetOwnedStateList(lateCountry)[0], force);  //その勢力の所有するステートのインデックス0(多分首都？)に移動させる
                     }
-                    
                 }
             }
         }
@@ -328,9 +349,9 @@ public class State : MonoBehaviour
 
     public StateType SetStateType()
     {
-        if (m_Population < 20000)    //人口20000以下
+        if (Population < 20000)    //人口20000以下
         {
-            if (m_Resource > 1500)  //資源が1500以上
+            if (Yield > 1500)  //資源が1500以上
             {
                 StateTypeJP = "山岳";
                 return StateType.Mountain;   //山岳地帯
@@ -343,7 +364,7 @@ public class State : MonoBehaviour
         }
         else
         {
-            if (m_Income > 2000)  //収入が2000以上
+            if (Income > 2000)  //収入が2000以上
             {
                 StateTypeJP = "河川";
                 return StateType.River;   //河川地帯
@@ -406,6 +427,7 @@ public class State : MonoBehaviour
             OccupiedCountry = null;
             OccupiedValue = 0;
             SetOwner(occupyingCountry);     //支配権を移行
+            Stability = 0.0f;
             m_StateIcon.SetActive(false);   //占領されているアイコンをオフ
             forceGroup.EndOccupy(this);     //占領を終了する
         }
@@ -441,5 +463,15 @@ public class State : MonoBehaviour
         }
 
         BuildingList.Add(type);             //建物を追加
+    }
+
+    public void ChangeStateStability(float percent)
+    {
+        Stability += percent;
+
+        if (Stability >= kMaxStability)
+        {
+            Stability = kMaxStability;
+        }
     }
 }
